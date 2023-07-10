@@ -4,7 +4,6 @@
 !*/
 # Un-ignore specific files under subtree
 !1.LANDIS-MODEL/**
-!8.CROWN-SCORCH/**
 !9.FIA/**
 !DOCS/**
 !tools/**
@@ -37,10 +36,11 @@ __pycache__
 1.LANDIS-MODEL/LANDIS_run-Fire2-Wet/**
 1.LANDIS-MODEL/LANDIS_run-Fire5-Dry/**
 1.LANDIS-MODEL/LANDIS_run-Fire5-Wet/**
+1.LLM-HSM-MODEL/**
 5.TREES-QUICFIRE/**
 7.QUICFIRE-MODEL/**
-7.QUICFIRE-MODEL/mac_compile/**
-7.QUICFIRE-MODEL/source_code/**
+7.QUICFIRE-MODEL-OLD/**
+8.CROWN-SCORCH/**
 9.FIA/RF_models/**
 9.FIA/FIA_raw/**
 .Rproj.user
