@@ -205,6 +205,11 @@ def runQF(i,VDM,qf_options):
     copyfile(src+'treesrhof.dat',dst+'treesrhof.dat')
     copyfile(src+'treesss.dat',dst+'treesss.dat')
     
+    src = '..'
+    dst = '../7.QUICFIRE-MODEL/scripts/postprocessing/python3/'
+    copyfile(src+'quicfire_vis.py', dst+'quicfire_vis.py')
+    copyfile(src+'QF_fire_effects.py', dst+'QF_fire_effects.py')
+    
     # for landis, add surface fuel density, moisture, and depth values for non-canopy fuels
     if VDM == "LANDIS":
         # import .dat files output by trees
@@ -236,7 +241,7 @@ def runQF(i,VDM,qf_options):
         ttrs.export_fortran_dat_file(fueldepth,"treesfueldepth.dat")
         os.chdir("../../../5.TREES-QUICFIRE")
     
-    os.chdir("../7.QUICFIRE-MODEL/mac_compile/")
+    os.chdir("../7.QUICFIRE-MODEL/build/quic_fire/")
     # HAD TO CHANGE adv_compile_and_run.sh ARGUMENT testcase TO MATCH dst IN LINE 165
     # MUST CHANGE QF INPUTS TO MATCH DOMAIN SIZE
     
@@ -255,7 +260,7 @@ def runQF(i,VDM,qf_options):
             #Successful run should produce bunch of binary files in 
             #7.QUICFIRE-MODEL/projects/Tester. Now run the postfire script 
             #that will generate PercentFuelChange.txt file required for the next step.
-            os.chdir("../projects/LandisTester")
+            os.chdir("../../projects/LandisTester")
             # pff.main(0)
     direc = "Plots"
     dd = direc + str(i)

@@ -251,16 +251,20 @@ def print_QU_TopoInputs_inp(ri):
     fname = os.path.join(ri['RUN_PATH'], 'QU_TopoInputs.inp')
     if ri['topo_custom']:
         topo_flag = 11
-        topo_fname = "topo.dat"
+        smoothing = 1
+        passes = 1
+        topo_fname = "ftelevation.dat"
     else:
         topo_flag = 0
+        smoothing = 0
+        passes = 0
         topo_fname = '""'
     with open(fname, 'w') as input_file:
         input_file.write("Specify file name for custom topo (full path)\n")
         input_file.write("{}\n".format(topo_fname))
         input_file.write("{}     ! N/A, topo flag: 0 = flat, 1 = Gaussian hill, 2 = hill pass, 3 = slope mesa, 4 = canyon, 5 = custom, 6 = half circle, 7 = sinusoid, 8 = cos hill, 9 = QP_elevation.inp, 10 = terrainOutput.txt (ARA), 11 = terrain.dat (firetec)\n".format(topo_flag))
-        input_file.write("0     ! N/A, smoothing method (0 = none (default for idealized terrain), 1 = blur, 2 = David's)\n")
-        input_file.write("0     ! N/A, number of smoothing passes\n")
+        input_file.write("{}     ! N/A, smoothing method (0 = none (default for idealized terrain), 1 = blur, 2 = David's)\n".format(smoothing))
+        input_file.write("{}     ! N/A, number of smoothing passes\n".format(passes))
         input_file.write("100   ! N/A, number of initial SOR iterations (only if fire is run)\n")
         input_file.write("4     ! N/A, sor cycles\n")
         input_file.write("1.3   ! N/A, sor relaxation parameter (default for flat is 1.78, ignored if there is no terrain)\n")
@@ -284,6 +288,7 @@ def print_Runtime_Advanced_User_Inputs_inp(ri):
     fname = os.path.join(ri['RUN_PATH'], 'Runtime_Advanced_User_Inputs.inp')
     with open(fname, 'w') as input_file:
         input_file.write("8  ! max number of cpu\n")
+        input_file.write("0\n")
 
 
 def print_sensor1_inp(ri):
