@@ -13,9 +13,9 @@ PROJ_PATH = os.path.join(OG_PATH,"7.QUICFIRE-MODEL","projects")
 ###Settings to change###
 
 # Simulation parameters
-qf_options['QFVD'] = 4 #version 4 or 5
+qf_options['QFVD'] = 5 #version 4 or 5
 PROJ_FOLDER = "LandisTester" #folder containing QF inputs
-qf_options['SimTime'] = 1800
+qf_options['SimTime'] = 900
 qf_options['print_times'] = 30
 
 # Domain settings
@@ -24,19 +24,19 @@ qf_options['ny'] = 200 #"
 qf_options['nz'] = 22  #"
 
 # Constant surface fuel parameters
-qf_options['fuel_moisture'] = 0.05
-qf_options['fuel_height'] = 0.1
+qf_options['fuel_moisture'] = 0.10
+qf_options['fuel_height'] = 0.5
 
 # Topo settings
 qf_options['topo_custom'] = False
 qf_options['max_topo'] = 0 #set for flat right now, may use custom topo in the future
 
 # Wind settings
-qf_options['windspeed'] = 6.0 #m/s
+qf_options['windspeed'] = 2.235 #m/s
 qf_options['winddir'] = 270
 
 # Ignitions settings
-qf_options['custom_ig'] = False
+qf_options['custom_ig'] = True
 qf_options['ig_xmin'] = 395.0 #m (Adam's original pattern here. Modified in code for LANDIS runs)
 qf_options['ig_ymin'] = 2.0
 qf_options['ig_xlen'] = 5.0
