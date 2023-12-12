@@ -205,13 +205,14 @@ def runQF(i,VDM,qf_options):
     copyfile(src+'treesrhof.dat',dst+'treesrhof.dat')
     copyfile(src+'treesss.dat',dst+'treesss.dat')
     
-    src = '..'
+    src = '../'
     dst = '../7.QUICFIRE-MODEL/scripts/postprocessing/python3/'
     copyfile(src+'quicfire_vis.py', dst+'quicfire_vis.py')
     copyfile(src+'QF_fire_effects.py', dst+'QF_fire_effects.py')
     
     # for landis, add surface fuel density, moisture, and depth values for non-canopy fuels
     if VDM == "LANDIS":
+        import geopandas as gpd
         # import .dat files output by trees
         # these will only have canopy fuels
         os.chdir("../5.TREES-QUICFIRE")
@@ -224,9 +225,11 @@ def runQF(i,VDM,qf_options):
         rhof = ttrs.import_fortran_dat_file("treesrhof.dat", cell_nums)
         moist = ttrs.import_fortran_dat_file("treesmoist.dat", cell_nums)
         fueldepth = ttrs.import_fortran_dat_file("treesfueldepth.dat",cell_nums)
+        print(np.mean(rhof[0,:,:]))
         # read in surface fuels from landis
         os.chdir("../1.LANDIS-MODEL/VDM2FM")
         surf = np.loadtxt("VDM_litter_trees.dat")
+        print(np.mean(surf))
         # replace fuel moisture and depth values only where there are no canopy fuels
         qf_moist = np.full((cell_nums[1],cell_nums[0]), qf_options['fuel_moisture'])
         moist[0,:,:] = np.where((rhof[0,:,:]>0) | (surf == 0), moist[0,:,:], qf_moist)
@@ -234,6 +237,12 @@ def runQF(i,VDM,qf_options):
         fueldepth[0,:,:] = np.where((rhof[0,:,:]>0) | (surf==0), fueldepth[0,:,:], qf_depth)
         # now add surface fuel density from landis to canopy fuel density from trees
         rhof[0,:,:] = surf + rhof[0,:,:]
+        # remove fuels around the plot border
+        burn_plot = gpd.read_file("../Shapefiles/burn_plot.shp")
+        bbox = gpd.read_file("../Shapefiles/burn_domain.shp")
+        mask = ttrs.remove_shapefile_from_bbox(burn_plot.boundary.buffer(4),bbox)
+        rhof[0,:,:] *=mask
+        print(np.mean(rhof[0,:,:]))
         # export new .dat files
         os.chdir("../../7.QUICFIRE-MODEL/projects/LandisTester/")
         ttrs.export_fortran_dat_file(rhof,"treesrhof.dat")
