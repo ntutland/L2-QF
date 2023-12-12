@@ -10,6 +10,7 @@ import os
 from jinja2 import Template, TemplateError
 from scipy import interpolate
 from scipy.io import FortranFile
+from skimage.measure import block_reduce
 
 def import_fortran_dat_file(filename,cell_nums):
     (nx,ny,nz) = cell_nums
@@ -101,7 +102,7 @@ def aggregate_array_to_lower_resolution(arr,res_x=2,res_y=2): # NEEDS CLEANING U
     arr = arr.mean(3).mean(1)
     return arr
 
-def remove_shapefile_from_bbox(mask_shp,dom_shp,res_xy=[2,2]):
+def remove_shapefile_from_bbox(mask_shp,dom_shp):
     '''
     Uses mask shapefile to create a mask in the size of the domain shapefile.
     If you don't have a domain shapefile, feed in the mask_shp.buffer(50) as a good default
@@ -127,9 +128,34 @@ def remove_shapefile_from_bbox(mask_shp,dom_shp,res_xy=[2,2]):
     msk = np.fliplr(np.flipud(geometry_mask(mask_shp.geometry, [msk_yext,msk_xext], geoT)))
     arr = np.ones([dom_yext,dom_xext],dtype=int)
     arr[y_corner:y_corner+msk_yext,x_corner:x_corner+msk_xext] *= msk
-    arr = arr.reshape(dom_yext//res_xy[1],res_xy[1], dom_xext//res_xy[0],res_xy[0])
-    arr = arr.mean(3).mean(1)
+    # NJT method (uses ceiling division)
+    arr = block_reduce(arr, int(2), func=np.min)
+    # ZC method (uses floor division)
+    # arr = arr.reshape(dom_yext//res_xy[1],res_xy[1], dom_xext//res_xy[0],res_xy[0])
+    # arr = arr.mean(3).mean(1)
     return arr;
+
+def mask_from_shape(dom, mask, buff):
+    from rasterio.features import geometry_mask
+
+    total_bounds = mask.total_bounds
+    geoT = (-1.0,0.0,total_bounds[2],
+           0.0,-1.0,total_bounds[3])   
+
+    msk = np.fliplr(np.flipud(geometry_mask(mask.geometry, [dom.shape[1]*2, dom.shape[2]*2], geoT)))
+    
+    msk = np.roll(msk, -buff, axis=0)
+    msk = np.roll(msk, -buff, axis=1)
+    
+    msk = block_reduce(msk, int(2), func=np.min)
+    return msk
+
+def plot_array(x,title):
+    plt.figure(2)
+    plt.set_cmap('viridis')
+    plt.imshow(x,origin='lower')
+    plt.colorbar()
+    plt.title(title,fontsize=18)
 
 class AlbersEqualAreaConic: # Used exclusively to convert Albers  to Lat/Long (Forward) and the Inverse
     
