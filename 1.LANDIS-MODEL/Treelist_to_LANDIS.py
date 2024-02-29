@@ -244,71 +244,61 @@ def replace_fuels(
     ) as slb:
         slb_arr = slb.read(1)
         with rio.open(
-            os.path.join(
-                landis_path, "NECN", "ConiferNeedleBiomass-" + str(year_prev) + ".img"
-            ),
+            os.path.join(landis_path, "Postfire_litter_cycle" + str(cycle) + ".tif"),
             "r+",
-        ) as cnb:
-            cnb_arr = cnb.read(1)
-            landis_arr = slb_arr + cnb_arr
-            with rio.open(
-                os.path.join(
-                    landis_path, "Postfire_litter_cycle" + str(cycle) + ".tif"
-                ),
-                "r+",
-            ) as pfl:
-                litter_arr = pfl.read(1)
-                if crop_domain:
-                    with rio.open(os.path.join(landis_path, IC_map), "r+") as IC:
-                        print("IC_map:", IC_map)  # this might be the problem
-                        x_start = int((pfl.transform[2] - IC.transform[2]) / L2_res)
-                        y_start = int((IC.transform[5] - pfl.transform[5]) / L2_res)
-                        x_end = int(x_start + pfl.shape[1])
-                        y_end = int(y_start + pfl.shape[0])
-                        print(
-                            "x_start:",
-                            x_start,
-                            "y_start:",
-                            y_start,
-                            "x_end:",
-                            x_end,
-                            "y_end:",
-                            y_end,
-                        )
-                        postfire_finefuel = landis_arr.copy()
-                        print("litter_arr shape:", litter_arr.shape)
-                        print(
-                            "start/end shape:",
-                            postfire_finefuel[y_start:y_end, x_start:x_end].shape,
-                        )
-                        postfire_finefuel[y_start:y_end, x_start:x_end] = litter_arr
-                        with rio.open(
-                            os.path.join(
-                                landis_path, "SurfaceFuels_cycle" + str(cycle) + ".tif"
-                            ),
-                            mode="w",
-                            height=IC.height,
-                            width=IC.width,
-                            count=1,
-                            dtype=postfire_finefuel.dtype,
-                            crs="EPSG:5070",
-                            transform=IC.transform,
-                        ) as out:
-                            out.write(postfire_finefuel, 1)
-                else:
+        ) as pfl:
+            litter_arr = pfl.read(1)
+            if crop_domain:
+                with rio.open(os.path.join(landis_path, IC_map), "r+") as IC:
+                    print("IC_map:", IC_map)  # this might be the problem
+                    x_start = int((pfl.transform[2] - IC.transform[2]) / L2_res)
+                    y_start = int((IC.transform[5] - pfl.transform[5]) / L2_res)
+                    x_end = int(x_start + pfl.shape[1])
+                    y_end = int(y_start + pfl.shape[0])
+                    print(
+                        "x_start:",
+                        x_start,
+                        "y_start:",
+                        y_start,
+                        "x_end:",
+                        x_end,
+                        "y_end:",
+                        y_end,
+                    )
+                    postfire_finefuel = slb_arr.copy()
+                    print("litter_arr shape:", litter_arr.shape)
+                    print(
+                        "start/end shape:",
+                        postfire_finefuel[y_start:y_end, x_start:x_end].shape,
+                    )
+                    postfire_finefuel[y_start:y_end, x_start:x_end] = litter_arr
                     with rio.open(
                         os.path.join(
                             landis_path, "SurfaceFuels_cycle" + str(cycle) + ".tif"
                         ),
                         mode="w",
-                        height=pfl.height,
-                        width=pfl.width,
+                        height=IC.height,
+                        width=IC.width,
                         count=1,
-                        dtype=litter_arr.dtype,
+                        dtype=postfire_finefuel.dtype,
                         crs="EPSG:5070",
-                        transform=pfl.transform,
+                        transform=IC.transform,
                     ) as out:
-                        out.write(litter_arr, 1)
+                        out.write(postfire_finefuel, 1)
+            else:
+                with rio.open(
+                    os.path.join(
+                        landis_path, "SurfaceFuels_cycle" + str(cycle) + ".tif"
+                    ),
+                    mode="w",
+                    height=pfl.height,
+                    width=pfl.width,
+                    count=1,
+                    dtype=litter_arr.dtype,
+                    crs="EPSG:5070",
+                    transform=pfl.transform,
+                ) as out:
+                    out.write(litter_arr, 1)
     if cycle == 1:
         ## Rename the original coarseroots raster so we can overwrite
         coarseroots_map_og = re.split("\.", coarseroots_map)[0] + "_original.tif"

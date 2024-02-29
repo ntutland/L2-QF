@@ -107,7 +107,6 @@ def toTreelist(lp: LandisParams):
     print("Interpolating surface fuels...")
     fuels = get_fuels(
         "SurfaceLitterBiomass-cycle" + str(lp.cycle) + "_cropped.tif",
-        "ConiferNeedleBiomass-cycle" + str(lp.cycle) + "_cropped.tif",
         lp.landis_path,
         lp.L2_res,
     )
@@ -785,10 +784,8 @@ def CW_NW_6(MinD, DBH, a1, a2):
     return CW
 
 
-def get_fuels(litter_name, needles_name, in_path, L2_res):
+def get_fuels(litter_name, in_path, L2_res):
     litter = raster_import(os.path.join(in_path, litter_name))
-    needles = raster_import(os.path.join(in_path, needles_name))
-    fuels = litter + needles
     fuels = fuels / 1000  # g to kg
     QF_fact = int(L2_res / 2)
     fuels_interp = spline_interp(fuels, QF_fact)
