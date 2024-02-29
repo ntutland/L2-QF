@@ -2,22 +2,26 @@
 #
 # (c) Elchin Jafarov 03/30/2021
 
-import numpy as np
-import matplotlib
-from matplotlib import pyplot as plt
+# Core Imports
+import sys
+import os
 import time
-import pandas as pd
-import random
-import sys,os
-import os.path
-import subprocess
-import re
-from shutil import copyfile
-import shutil
-from subprocess import call
 from time import sleep
+import shutil
+from shutil import copyfile
+import re
+import subprocess
+
+# External Imports
+from matplotlib import pyplot as plt
+import numpy as np
+import pandas as pd
 import yaml
-from QUICFire_options import qf_options, PROJ_FOLDER
+from quicfire_tools import SimulationInputs
+
+# Internal Imports
+from QUICFire_options import qf_options
+
 sys.path.insert(0, '1.LLM-HSM-MODEL/')
 import LLM_model_class as llm
 import LLM_FT_utils as llmft
@@ -30,15 +34,6 @@ import Buffer as buff
 sys.path.insert(0, "1.LANDIS-MODEL")
 import TTRS_QUICFire_Support as ttrs
 import Driptorch_Support as dts
-
-#Determine which quicfire print functions to use
-if qf_options['QFVD'] == 4:
-    import QFVD4.print_functions as QFVD
-elif qf_options['QFVD'] == 5:
-    import QFVD5.print_functions as QFVD
-else: 
-    print("QFVD version not supported. Check options.py.")
-    sys.exit(70)
 
 
 #VDM = "LLM" # Vegetation Demography Model: "LLM" or "FATES" or "LANDIS" #why is this here?
@@ -131,25 +126,37 @@ def savelittersLLMQF(p,i):
     
     return
 
-def print_qf_inputs(ri):
-    QFVD.print_gridlist(ri)
-    QFVD.print_QFire_Advanced_User_Inputs_inp(ri)
-    QFVD.print_QFire_Bldg_Advanced_User_Inputs_inp(ri) 
-    QFVD.print_QFire_Plume_Advanced_User_Inputs_inp(ri)
-    QFVD.print_QP_buildout_inp(ri)
-    QFVD.print_QUIC_fire_inp(ri)
-    QFVD.print_QU_buildings_inp(ri)
-    QFVD.print_QU_fileoptions_inp(ri)
-    QFVD.print_QU_metparams_inp(ri)
-    QFVD.print_QU_movingcoords_inp(ri)
-    QFVD.print_QU_simparams_inp(ri)
-    if ri['QFVD'] == 5:
-        QFVD.print_QU_TopoInputs_inp(ri)
-    QFVD.print_rasterorigin_txt(ri)
-    QFVD.print_Runtime_Advanced_User_Inputs_inp(ri)
-    QFVD.print_sensor1_inp(ri)
-    if ri['QFVD'] == 4:
-        QFVD.print_topo_inp(ri)
+def print_qf_inputs(ri: dict):
+    sim = SimulationInputs.create_simulation(
+        nx=ri["nx"],
+        ny=ri["ny"],
+        fire_nz=ri["nz"],
+        wind_speed=ri["windspeed"],
+        wind_direction=ri["winddir"],
+        sim_time=ri["SimTime"],
+    )
+    sim.set_custom_simulation(
+        fuel_density=True,
+        fuel_moisture=True,
+        fuel_height=True,
+        size_scale=True,
+        ignition=True,
+        topo=ri["topo_custom"],
+    )
+    sim.set_output_files(
+        fuel_dens=True, 
+        fuel_moist=True, 
+        react_rate=True, 
+        mass_burnt=True, 
+        surf_eng=True,
+        )
+    sim.runtime_advanced_user_inputs.num_cpus = 8
+    sim.quic_fire.out_time_fire = ri["print_times"]
+    sim.quic_fire.out_time_wind = ri["print_times"]
+    sim.quic_fire.out_time_wind_avg = ri["print_times"]
+    sim.quic_fire.out_time_emis_rad = ri["print_times"]
+
+    sim.write_inputs(ri["RUN_PATH"], version = 5)
 
 def runTreeQF(VDM,FM,nsp,nx,ny,nz,ii):
 # Note: Adam has a QF Tree code in '5.TREES-QUICFIRE'

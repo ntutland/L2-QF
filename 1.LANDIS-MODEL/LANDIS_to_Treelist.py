@@ -14,8 +14,9 @@ import os
 import rasterio as rio
 from rasterio.warp import calculate_default_transform, reproject, Resampling
 import time
+from Run_LANDIS import LandisParams
 
-def toTreelist(lp):
+def toTreelist(lp: LandisParams):
     start_time = time.time()
     
     ## Filepaths
