@@ -484,6 +484,8 @@ def main():
 
     nfuel = 2  # number of tree species (if not using LANDIS)
 
+    RUN_LANDIS = False
+
     # Build Trees
     os.chdir("5.TREES-QUICFIRE")
 
@@ -550,7 +552,8 @@ def main():
             OG_PATH, nyears, ncycyear, ncycle, cycle, spinup=True
         )
         # Run LANDIS
-        Run.Landis(L2_params)
+        if RUN_LANDIS:
+            Run.Landis(L2_params)
         os.chdir("..")
         # Crop to fire domain
         epsg = Crop.Landis(L2_params)
