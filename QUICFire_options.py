@@ -44,13 +44,22 @@ qf_options["ig_xmin"] = (
 qf_options["ig_ymin"] = 2.0
 qf_options["ig_xlen"] = 5.0
 qf_options["ig_ylen"] = 397.0
-
-# Below are options for potential future use of driptorch
 qf_options["ig_method"] = (
     "drip"  # options: "aerial", "drip", "total". Determines number of energy packets at ignitions
 )
+
+# Driptorch ignition options
+qf_options["ig_firingdir"] = qf_options["winddir"]
+qf_options["ig_rate"] = 1.5
+qf_options["ig_fast"] = False
+qf_options["ig_linetype"] = "dash"
+qf_options["ig_dashlen"] = 4
+qf_options["ig_gaplen"] = 4
 qf_options["ig_pattern"] = "strip"  # options: "strip", "flank", "head", "back"
-qf_options["ig_spacing"] = 20  # m
+qf_options["ig_crewsize"] = 4
+qf_options["ig_depth"] = 20
+qf_options["ig_offset"] = 10
+
 
 ###DO NOT CHANGE###
 qf_options["RUN_PATH"] = os.path.join(PROJ_PATH, PROJ_FOLDER)
