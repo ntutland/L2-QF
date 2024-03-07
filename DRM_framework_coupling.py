@@ -140,7 +140,7 @@ def print_qf_inputs(ri: dict):
         fire_nz=ri["nz"],
         wind_speed=ri["windspeed"],
         wind_direction=ri["winddir"],
-        sim_time=ri["SimTime"],
+        simulation_time=ri["SimTime"],
     )
     sim.set_custom_simulation(
         fuel_density=True,
@@ -484,31 +484,47 @@ def main():
 
     nfuel = 2  # number of tree species (if not using LANDIS)
 
+    MAKE_CLEAN = False
     RUN_LANDIS = False
 
     # Build Trees
     os.chdir("5.TREES-QUICFIRE")
+    if MAKE_CLEAN:
+        with subprocess.Popen(
+            ["wsl", "make", "clean"], stdout=subprocess.PIPE
+        ) as process:
 
-    with subprocess.Popen(["wsl", "make", "clean"], stdout=subprocess.PIPE) as process:
+            def poll_and_read():
+                print(f"{process.stdout.read1().decode('utf-8')}")
 
-        def poll_and_read():
-            print(f"{process.stdout.read1().decode('utf-8')}")
+            while process.poll() != 0:
+                poll_and_read()
+                sleep(1)
+            if process.poll() == 0:
+                print("make clean successful - running make")
+                with subprocess.Popen(
+                    ["wsl", "make"], stdout=subprocess.PIPE
+                ) as process:
 
-        while process.poll() != 0:
-            poll_and_read()
-            sleep(1)
-        if process.poll() == 0:
-            print("make clean successful - running make")
-            with subprocess.Popen(["wsl", "make"], stdout=subprocess.PIPE) as process:
+                    def poll_and_read():
+                        print(f"{process.stdout.read1().decode('utf-8')}")
 
-                def poll_and_read():
-                    print(f"{process.stdout.read1().decode('utf-8')}")
+                    while process.poll() != 0:
+                        poll_and_read()
+                        sleep(1)
+                    if process.poll() == 0:
+                        print("trees successfully compiled")
+    else:
+        with subprocess.Popen(["wsl", "make"], stdout=subprocess.PIPE) as process:
 
-                while process.poll() != 0:
-                    poll_and_read()
-                    sleep(1)
-                if process.poll() == 0:
-                    print("trees successfully compiled")
+            def poll_and_read():
+                print(f"{process.stdout.read1().decode('utf-8')}")
+
+            while process.poll() != 0:
+                poll_and_read()
+                sleep(1)
+            if process.poll() == 0:
+                print("trees successfully compiled")
 
     # ierr = call('make clean', shell=True)
     # ierr = call('make', shell=True)

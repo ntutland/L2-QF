@@ -785,7 +785,7 @@ def CW_NW_6(MinD, DBH, a1, a2):
 
 
 def get_fuels(litter_name, in_path, L2_res):
-    litter = raster_import(os.path.join(in_path, litter_name))
+    fuels = raster_import(os.path.join(in_path, litter_name))
     fuels = fuels / 1000  # g to kg
     QF_fact = int(L2_res / 2)
     fuels_interp = spline_interp(fuels, QF_fact)
