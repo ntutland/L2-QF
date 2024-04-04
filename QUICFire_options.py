@@ -37,7 +37,7 @@ qf_options["windspeed"] = 4.47  # m/s
 qf_options["winddir"] = 270
 
 # Ignitions settings
-qf_options["custom_ig"] = True
+qf_options["custom_ig"] = False
 qf_options["ig_xmin"] = (
     395.0  # m (Adam's original pattern here. Modified in code for LANDIS runs)
 )
