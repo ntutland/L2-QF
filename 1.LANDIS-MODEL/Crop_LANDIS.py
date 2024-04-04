@@ -56,7 +56,7 @@ def Landis(lp: LandisParams):
                     os.path.join(OG_PATH, "Shapefiles", "burn_plot.shp")
                 )
                 tb = burn_plot.total_bounds
-                buff = 200
+                buff = 100
                 W = tb[0] - buff
                 S = tb[1] - buff
                 E = tb[2] + buff
