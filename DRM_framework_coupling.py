@@ -159,6 +159,13 @@ def print_qf_inputs(ri: dict):
     )
     sim.runtime_advanced_user_inputs.num_cpus = 8
     ep_dict = {"drip": 2, "aerial": 5, "total": 100}
+    if ri["custom_ig"] == False:
+        sim.set_rectangle_ignition(
+            x_min=100 + (ri["fireline_width"] / 2),
+            x_length=10,
+            y_min=100 + (ri["fireline_width"] / 2),
+            y_length=100 - ri["fireline_width"],
+        )
     sim.quic_fire.ignitions_per_cell = ep_dict.get(ri["ig_method"])
     sim.quic_fire.out_time_fire = ri["print_times"]
     sim.quic_fire.out_time_wind = ri["print_times"]
@@ -266,7 +273,9 @@ def runQF(i, VDM, qf_options):
         # remove fuels around the plot border
         burn_plot = gpd.read_file("../Shapefiles/burn_plot.shp")
         bbox = gpd.read_file("../Shapefiles/burn_domain.shp")
-        mask = ttrs.remove_shapefile_from_bbox(burn_plot.boundary.buffer(4), bbox)
+        mask = ttrs.remove_shapefile_from_bbox(
+            burn_plot.boundary.buffer(qf_options["fireline_width"] / 2), bbox
+        )
         rhof[0, :, :] *= mask
         print(np.mean(rhof[0, :, :]))
         # export new .dat files
@@ -486,6 +495,7 @@ def main():
 
     MAKE_CLEAN = False
     RUN_LANDIS = False
+    RUN_QUICFIRE = False
 
     # Build Trees
     os.chdir("5.TREES-QUICFIRE")
@@ -655,6 +665,8 @@ def main():
         runTreeQF(
             VDM, FM, nfuel, qf_options["nx"], qf_options["ny"], qf_options["nz"], ii
         )  # runs the tree program to create QF inputs
+        if RUN_QUICFIRE == False:
+            raise ValueError("Code stopped before running quicfire")
         runQF(i, VDM, qf_options)  # runs QUIC-Fire
         L = np.array(
             runCrownScorch(ii, VDM, L2_params, Treelist_params)

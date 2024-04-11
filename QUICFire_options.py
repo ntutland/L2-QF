@@ -47,6 +47,7 @@ qf_options["ig_ylen"] = 397.0
 qf_options["ig_method"] = (
     "drip"  # options: "aerial", "drip", "total". Determines number of energy packets at ignitions
 )
+qf_options["fireline_width"] = 8
 
 # Driptorch ignition options
 qf_options["ig_firingdir"] = qf_options["winddir"]

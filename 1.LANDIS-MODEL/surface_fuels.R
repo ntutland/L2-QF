@@ -4,8 +4,8 @@ setwd("..")
 
 library(terra)
 library(tidyverse)
-wkt <- crs(rast("1.LANDIS-MODEL/LANDIS_run_Fire2-Dry/IC_Map_FortBragg.tif"))
-extn <- ext(rast("1.LANDIS-MODEL/LANDIS_run_Fire2-Dry/IC_Map_FortBragg.tif"))
+wkt <- crs(rast("1.LANDIS-MODEL/LANDIS_run-Fire2-Dry/IC_Map_FortBragg.tif"))
+extn <- ext(rast("1.LANDIS-MODEL/LANDIS_run-Fire2-Dry/IC_Map_FortBragg.tif"))
 aoi <- vect("1.LANDIS-MODEL/Shapefiles/burn_plot.shp")
 runlist <- c("Fire2-Dry", "Fire2-Wet", "Fire5-Dry", "Fire5-Wet")
 # runlist <- c("Fire2-Dry", "Fire2-Wet")
@@ -16,7 +16,7 @@ for(run in runlist){
   needle_mat <- matrix(ncol = 6, nrow = 50)
   litter_mat <- matrix(ncol = 6, nrow = 50)
   for(i in 1:50){
-    litter <- rast(paste0("1.LANDIS-MODEL/","LANDIS_run_",run,"/NECN/SurfaceLitterBiomass-",i,".img"))
+    litter <- rast(paste0("1.LANDIS-MODEL/","LANDIS_run-",run,"/NECN/SurfaceLitterBiomass-",i,".img"))
     litter[litter==0] <- NA
     crs(litter) <- wkt
     ext(litter) <- extn
