@@ -164,7 +164,7 @@ def print_qf_inputs(ri: dict):
             x_min=100 + (ri["fireline_width"] / 2),
             x_length=10,
             y_min=100 + (ri["fireline_width"] / 2),
-            y_length=100 - ri["fireline_width"],
+            y_length=ri["ny"] * 2 - 200 - ri["fireline_width"],
         )
     sim.quic_fire.ignitions_per_cell = ep_dict.get(ri["ig_method"])
     sim.quic_fire.out_time_fire = ri["print_times"]
