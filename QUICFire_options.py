@@ -14,6 +14,7 @@ PROJ_PATH = os.path.join(OG_PATH, "7.QUICFIRE-MODEL", "projects")
 ###Settings to change###
 
 # Simulation parameters
+qf_options["RUN_SIM"] = False
 qf_options["QFVD"] = "v5"  # "v5" or "v6"
 PROJ_FOLDER = "LandisTester"  # folder containing QF inputs
 qf_options["SimTime"] = 10800

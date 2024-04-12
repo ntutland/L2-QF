@@ -284,7 +284,8 @@ def runQF(i, VDM, qf_options):
         ttrs.export_fortran_dat_file(moist, "treesmoist.dat")
         ttrs.export_fortran_dat_file(fueldepth, "treesfueldepth.dat")
         os.chdir("../../../5.TREES-QUICFIRE")
-
+    if qf_options["RUN_SIM"] == False:
+        raise ValueError("Code stopped before running quicfire")
     os.chdir("../7.QUICFIRE-MODEL/build/quic_fire/")
     # HAD TO CHANGE adv_compile_and_run.sh ARGUMENT testcase TO MATCH dst IN LINE 165
     # MUST CHANGE QF INPUTS TO MATCH DOMAIN SIZE
@@ -665,8 +666,6 @@ def main():
         runTreeQF(
             VDM, FM, nfuel, qf_options["nx"], qf_options["ny"], qf_options["nz"], ii
         )  # runs the tree program to create QF inputs
-        if RUN_QUICFIRE == False:
-            raise ValueError("Code stopped before running quicfire")
         runQF(i, VDM, qf_options)  # runs QUIC-Fire
         L = np.array(
             runCrownScorch(ii, VDM, L2_params, Treelist_params)
