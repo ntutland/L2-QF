@@ -496,7 +496,6 @@ def main():
 
     MAKE_CLEAN = False
     RUN_LANDIS = False
-    RUN_QUICFIRE = False
 
     # Build Trees
     os.chdir("5.TREES-QUICFIRE")

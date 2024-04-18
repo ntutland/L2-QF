@@ -12,8 +12,9 @@
 # Do not ignore these files
 !.gitignore
 !README*
-!DRM_framework_coupling.py
-!QUICFire_options.py
+!*.py
+!.R
+!.Rmd
 # Ignore these files
 .DS_Store
 __pycache__
