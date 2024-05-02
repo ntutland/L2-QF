@@ -1,0 +1,262 @@
+---
+title: "Manuscript Figures"
+output: html_document
+date: "2024-03-28"
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+```{r}
+library(here)
+library(tidyverse)
+library(terra)
+library(tidyterra)
+library(ggthemes)
+library(ggpattern)
+```
+
+## Visualize Burn Plot Pre-Landis
+
+Find a way to neatly show initial communities. Show full landscape and burn plot. For full landscape, perhaps just color it by dominant tree species. Show more information for burn plot.
+
+### Full Landis Run
+
+Read in IC map and IC csv. Find tree species with highest biomass for each MapCode, then add that info to the raster.
+```{r}
+IC_map <- rast(here("1.LANDIS-MODEL","LANDIS_run-Fire2-Dry","IC_Map_FortBragg.tif"))
+IC_file <- read.csv(here("1.LANDIS-MODEL","LANDIS_run-Fire2-Dry","community-input-file-0.csv"))
+IC_dom <- IC_file %>%
+  group_by(MapCode,SpeciesName) %>%
+  summarize(total_sp_biomass = sum(CohortBiomass)) %>%
+  ungroup() %>%
+  group_by(MapCode) %>%
+  slice_max(total_sp_biomass) %>%
+  mutate(SpeciesName = case_when(SpeciesName=="LobPine" ~ "Loblolly Pine",
+                                 SpeciesName=="LongleafPine" ~ "Longleaf Pine",
+                                 SpeciesName=="SlashPine" ~ "Slash Pine",
+                                 SpeciesName=="TulipTree" ~ "Tulip Poplar",
+                                 SpeciesName=="RedMaple" ~ "Red Maple",
+                                 SpeciesName=="SweetGum" ~ "Sweetgum",
+                                 SpeciesName=="WhiteOak" ~ "Oak spp.",
+                                 SpeciesName=="TurkeyOak" ~ "Oak spp.",
+                                 SpeciesName=="ShortPine" ~ "Shortleaf Pine")) %>%
+  mutate(SpeciesName = factor(SpeciesName,
+                              levels = c(
+                                "Longleaf Pine",
+                                "Loblolly Pine",
+                                "Slash Pine",
+                                "Shortleaf Pine",
+                                "Tulip Poplar",
+                                "Sweetgum",
+                                "Red Maple",
+                                "Oak spp."
+                              ))) %>%
+  mutate(SpeciesID = as.numeric(SpeciesName))
+IC_map_df <- as.data.frame(IC_map) %>%
+  rename(MapCode = IC_Map_FortBragg)
+IC_map_dom <- left_join(IC_map_df, IC_dom)
+IC_map_rst <- IC_map_dom %>% select(SpeciesID)
+mapcodes <- unique(IC_map_dom$SpeciesID)
+sp_names <- unique(IC_map_dom$SpeciesName)
+IC_levels <- tibble("id"=mapcodes, "levels"=sp_names) %>% drop_na()
+IC_map$IC_map_rst <- IC_map_rst
+IC_dom_map <- IC_map$IC_map_rst
+levels(IC_dom_map) <- IC_levels
+```
+
+```{r}
+ggplot() +
+  geom_spatraster(data=IC_dom_map) +
+  scale_fill_colorblind() +
+  labs(fill="Dominant Tree Species") +
+  theme_bw()
+#TODO: Reorder legend, remove NA
+```
+
+### Zoom in on burn plot
+
+Look at the dominant tree species
+```{r}
+bp4 <- vect(here("BurnPlots","FB_plot4.shp")) %>%
+  project(crs(IC_dom_map))
+
+ext_new = ext(bp4)
+ext_new[1] = ext_new[1]-60
+ext_new[2] = ext_new[2]+60
+ext_new[3] = ext_new[3]-60
+ext_new[4] = ext_new[4]+60
+IC_crop_bp4 <- crop(IC_dom_map,ext_new)
+```
+```{r}
+ggplot() +
+  geom_spatraster(data=IC_crop_bp4)+
+  scale_fill_colorblind()+
+  geom_spatvector(data=bp4,fill=NA,linewidth=1)+
+  theme_bw()
+```
+
+Look at forest types before and after
+
+```{r}
+before <- read.csv(here("1.LANDIS-MODEL","LANDIS_run-Fire2-Dry","community-input-file-0.csv"))
+fire2_dry <- read.csv(here("1.LANDIS-MODEL","LANDIS_run-Fire2-Dry","community-input-file-50.csv"))
+fire2_wet <- read.csv(here("1.LANDIS-MODEL","LANDIS_run-Fire2-Wet","community-input-file-50.csv"))
+fire5_dry <- read.csv(here("1.LANDIS-MODEL","LANDIS_run-Fire5-Dry","community-input-file-50.csv"))
+fire5_wet <- read.csv(here("1.LANDIS-MODEL","LANDIS_run-Fire2-Dry","community-input-file-50.csv"))
+before$pre_post <- "Initial Conditions"
+fire2_dry$pre_post <- "Fire2-Dry"
+fire2_wet$pre_post <- "Fire2-Wet"
+fire5_dry$pre_post <- "Fire5-Dry"
+fire5_wet$pre_post <- "Fire5-Wet"
+before_after <- rbind(before,fire2_dry,fire2_wet,fire5_dry,fire5_wet)
+```
+
+```{r}
+BA_two_sp <- before_after %>%
+  group_by(pre_post, MapCode, SpeciesName) %>%
+  slice_max(CohortBiomass) %>%
+  ungroup() %>%
+  mutate(SpeciesName = case_when(SpeciesName=="LobPine" ~ "Loblolly Pine",
+                                 SpeciesName=="LongleafPine" ~ "Longleaf Pine",
+                                 SpeciesName=="SlashPine" ~ "Slash Pine",
+                                 SpeciesName=="TulipTree" ~ "Tulip Poplar",
+                                 SpeciesName=="RedMaple" ~ "Red Maple",
+                                 SpeciesName=="SweetGum" ~ "Sweetgum",
+                                 SpeciesName=="WhiteOak" ~ "White Oak",
+                                 SpeciesName=="TurkeyOak" ~ "Turkey Oak",
+                                 SpeciesName=="ShortPine" ~ "Shortleaf Pine")) %>%
+  mutate(SpeciesName = factor(SpeciesName,
+                              levels = c(
+                                "Longleaf Pine",
+                                "Loblolly Pine",
+                                "Slash Pine",
+                                "Shortleaf Pine",
+                                "Tulip Poplar",
+                                "Sweetgum",
+                                "Red Maple",
+                                "Oak spp."
+                              ))) %>%
+  group_by(pre_post,MapCode) %>%
+  top_n(2, CohortBiomass) %>%
+  arrange(MapCode, desc(CohortBiomass)) %>%
+  mutate(rank = row_number()) %>%
+  select(-CohortAge, -CohortBiomass) %>%
+  pivot_wider(names_from = rank, values_from = SpeciesName) %>%
+  rename(Highest_Biomass = `1`, Second_Highest_Biomass = `2`) %>%
+  ungroup() %>%
+  select(-`3`) %>%
+  mutate(forest_type = if_else(
+    is.na(Second_Highest_Biomass),
+    Highest_Biomass,
+    paste0("1. ",Highest_Biomass," 2. ",Second_Highest_Biomass)
+    )) %>%
+  select(MapCode,forest_type,pre_post) %>%
+  mutate(forest_type = factor(forest_type))
+
+forest_types <- unique(BA_two_sp$forest_type)
+forest_types <- data.frame("forest_type" = forest_types)
+forest_types$FT_ID = as.numeric(row.names(forest_types))
+forest_types <- forest_types %>% mutate(forest_type = factor(forest_type))
+
+BA_split <- BA_two_sp %>%
+  pivot_wider(names_from = pre_post, values_from = forest_type) %>%
+  left_join(forest_types, by=join_by("Initial Conditions"=="forest_type")) %>%
+  rename(IC_ID = FT_ID) %>%
+  left_join(forest_types, by=join_by("Fire2-Dry"=="forest_type")) %>%
+  rename(F2D_ID = FT_ID) %>%
+  left_join(forest_types, by=join_by("Fire2-Wet"=="forest_type")) %>%
+  rename(F2W_ID = FT_ID) %>%
+  left_join(forest_types, by=join_by("Fire5-Dry"=="forest_type")) %>%
+  rename(F5D_ID = FT_ID) %>%
+  left_join(forest_types, by=join_by("Fire5-Wet"=="forest_type")) %>%
+  rename(F5W_ID = FT_ID) %>%
+  mutate(IC_ID = as.numeric(IC_ID),
+         F2D_ID = as.numeric(F2D_ID),
+         F2W_ID = as.numeric(F2W_ID),
+         F5D_ID = as.numeric(F5D_ID),
+         F5W_ID = as.numeric(F5W_ID))
+
+IC_map_df <- as.data.frame(IC_map) %>%
+  rename(MapCode = IC_Map_FortBragg)
+IC_df <- BA_split %>% select(MapCode,IC_ID)
+F2D_df <- BA_split %>% select(MapCode,F2D_ID)
+F2W_df <- BA_split %>% select(MapCode,F2W_ID)
+F5D_df <- BA_split %>% select(MapCode,F5D_ID)
+F5W_df <- BA_split %>% select(MapCode,F5W_ID)
+Initial_map <- left_join(IC_map_df, IC_df)
+F2D_map <- left_join(IC_map_df, F2D_df)
+F2W_map <- left_join(IC_map_df, F2W_df)
+F5D_map <- left_join(IC_map_df, F5D_df)
+F5W_map <- left_join(IC_map_df, F5W_df)
+IC_rst <- Initial_map %>% select(IC_ID)
+F2D_rst <- F2D_map %>% select(F2D_ID)
+F2W_rst <- F2W_map %>% select(F2W_ID)
+F5D_rst <- F5D_map %>% select(F5D_ID)
+F5W_rst <- F5W_map %>% select(F5W_ID)
+
+Initial_map$`Initial Conditions` <- IC_rst
+IC_all <- Initial_map$`Initial Conditions`
+Initial_map$`Fire2-Dry` <- F2D_rst
+Initial_map$`Fire2-Wet` <- F2W_rst
+Initial_map$`Fire5-Dry` <- F5D_rst
+Initial_map$`Fire5-Wet` <- F5W_rst
+F2D_all <- Initial_map$`Fire2-Dry`
+F2W_all <- Initial_map$`Fire2-Wet`
+F5D_all <- Initial_map$`Fire5-Dry`
+F5W_all <- Initial_map$`Fire5-Wet`
+levels(IC_all) <- forest_types %>% select(FT_ID, forest_type)
+levels(F2D_all) <- forest_types %>% select(FT_ID, forest_type)
+levels(F2W_all) <- forest_types %>% select(FT_ID, forest_type)
+levels(F5D_all) <- forest_types %>% select(FT_ID, forest_type)
+levels(F5W_all) <- forest_types %>% select(FT_ID, forest_type)
+before_after_all <- c(IC_all,F2D_all,F2W_all,F5D_all,F5W_all)
+names(before_after_all) <- c("Initial Conditions","Fire2-Dry","Fire2-Wet","Fire5-Dry","Fire5-Wet")
+```
+
+```{r}
+before_after_plot <- crop(before_after_all, ext_new)
+my_colors = c(colorblind_pal()(8),"gray75")
+ggplot() +
+  geom_spatraster(data=before_after_plot) +
+  facet_wrap(~lyr) +
+  geom_spatvector(data=bp4, fill=NA, linewidth=1) +
+  scale_fill_manual(values=my_colors, na.value = "transparent") +
+  labs(fill="Most abundant tree\nspecies by biomass") +
+  theme_bw() +
+  theme(axis.text = element_blank(),
+        axis.ticks = element_blank())
+```
+
+### Plot changes in biomass and age distributions
+
+```{r}
+before_after %>%
+  group_by(pre_post, MapCode, SpeciesName) %>%
+  summarize(TotalBiomass = sum(CohortBiomass)) %>%
+  ggplot() +
+  geom_bar(aes(x=SpeciesName,y=TotalBiomass,fill=pre_post),stat = "identity", position = position_dodge()) +
+  scale_fill_colorblind() +
+  theme_bw()
+```
+```{r}
+before_after %>%
+  ggplot() +
+  geom_boxplot(aes(x=SpeciesName,y=CohortAge,color=pre_post), outlier.shape = 1) + 
+  scale_color_colorblind() +
+  theme_bw()
+```
+
+## Visualize Treelists
+
+```{r}
+treelist <- read.csv(here("1.LANDIS-MODEL","LANDIS_run","Treelist_postlandis_cycle0.csv"))
+
+treelist %>%
+  ggplot() +
+  geom_point(aes(X,Y,color=SPECIES_SYMBOL,size=DBH), shape=1) +
+  theme_bw()
+#TODO: Just do a single mapcode
+```
+

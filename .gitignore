@@ -13,8 +13,8 @@
 !.gitignore
 !README*
 !*.py
-!.R
-!.Rmd
+!*.R
+!*.Rmd
 # Ignore these files
 .DS_Store
 __pycache__
