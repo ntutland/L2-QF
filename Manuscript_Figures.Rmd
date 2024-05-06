@@ -185,27 +185,31 @@ F2D_df <- BA_split %>% select(MapCode,F2D_ID)
 F2W_df <- BA_split %>% select(MapCode,F2W_ID)
 F5D_df <- BA_split %>% select(MapCode,F5D_ID)
 F5W_df <- BA_split %>% select(MapCode,F5W_ID)
+
 Initial_map <- left_join(IC_map_df, IC_df)
 F2D_map <- left_join(IC_map_df, F2D_df)
 F2W_map <- left_join(IC_map_df, F2W_df)
 F5D_map <- left_join(IC_map_df, F5D_df)
 F5W_map <- left_join(IC_map_df, F5W_df)
+
 IC_rst <- Initial_map %>% select(IC_ID)
 F2D_rst <- F2D_map %>% select(F2D_ID)
 F2W_rst <- F2W_map %>% select(F2W_ID)
 F5D_rst <- F5D_map %>% select(F5D_ID)
 F5W_rst <- F5W_map %>% select(F5W_ID)
 
-Initial_map$`Initial Conditions` <- IC_rst
-IC_all <- Initial_map$`Initial Conditions`
-Initial_map$`Fire2-Dry` <- F2D_rst
-Initial_map$`Fire2-Wet` <- F2W_rst
-Initial_map$`Fire5-Dry` <- F5D_rst
-Initial_map$`Fire5-Wet` <- F5W_rst
-F2D_all <- Initial_map$`Fire2-Dry`
-F2W_all <- Initial_map$`Fire2-Wet`
-F5D_all <- Initial_map$`Fire5-Dry`
-F5W_all <- Initial_map$`Fire5-Wet`
+IC_map$`Initial Conditions` <- IC_rst
+IC_map$`Fire2-Dry` <- F2D_rst
+IC_map$`Fire2-Wet` <- F2W_rst
+IC_map$`Fire5-Dry` <- F5D_rst
+IC_map$`Fire5-Wet` <- F5W_rst
+
+IC_all <- IC_map$`Initial Conditions`
+F2D_all <- IC_map$`Fire2-Dry`
+F2W_all <- IC_map$`Fire2-Wet`
+F5D_all <- IC_map$`Fire5-Dry`
+F5W_all <- IC_map$`Fire5-Wet`
+
 levels(IC_all) <- forest_types %>% select(FT_ID, forest_type)
 levels(F2D_all) <- forest_types %>% select(FT_ID, forest_type)
 levels(F2W_all) <- forest_types %>% select(FT_ID, forest_type)
@@ -251,12 +255,24 @@ before_after %>%
 ## Visualize Treelists
 
 ```{r}
-treelist <- read.csv(here("1.LANDIS-MODEL","LANDIS_run","Treelist_postlandis_cycle0.csv"))
+treelist <- read.csv(here("1.LANDIS-MODEL","LANDIS_run-Fire2-Dry","Treelist_postlandis_cycle0.csv"))
+set.seed = 14
+sample_mapcode <- sample(unique(treelist$MapCode),1)
+mapcode <- treelist %>% filter(MapCode == sample_mapcode)
+mapcodes <- treelist %>%
+  filter((X>=100 & X<=300) & (Y>=500 & Y<=700))
 
-treelist %>%
+mapcodes %>%
   ggplot() +
-  geom_point(aes(X,Y,color=SPECIES_SYMBOL,size=DBH), shape=1) +
+  geom_hline(yintercept = 600, linetype = "dashed") +
+  geom_vline(xintercept = 200, linetype = "dashed") +
+  geom_point(aes(X,Y,color=SPECIES_SYMBOL,size=DBH), shape=16) +
+  scale_color_colorblind() +
+  coord_equal() +
+  labs(X = "X (m)",
+       Y = "Y (m)",
+       color = "Species") +
   theme_bw()
-#TODO: Just do a single mapcode
+#TODO: Replace species codes with species names
 ```
 
