@@ -27,6 +27,10 @@ Find a way to neatly show initial communities. Show full landscape and burn plot
 Read in IC map and IC csv. Find tree species with highest biomass for each MapCode, then add that info to the raster.
 ```{r}
 IC_map <- rast(here("1.LANDIS-MODEL","LANDIS_run-Fire2-Dry","IC_Map_FortBragg.tif"))
+FB_shp <- vect(here("FtBraggBoundary","FtBraggBoundary.shp"))
+FB_shp <- project(FB_shp, IC_map)
+FB_shp <- crop(FB_shp, IC_map)
+
 IC_file <- read.csv(here("1.LANDIS-MODEL","LANDIS_run-Fire2-Dry","community-input-file-0.csv"))
 IC_dom <- IC_file %>%
   group_by(MapCode,SpeciesName) %>%
@@ -45,35 +49,50 @@ IC_dom <- IC_file %>%
                                  SpeciesName=="ShortPine" ~ "Shortleaf Pine")) %>%
   mutate(SpeciesName = factor(SpeciesName,
                               levels = c(
-                                "Longleaf Pine",
-                                "Loblolly Pine",
-                                "Slash Pine",
-                                "Shortleaf Pine",
-                                "Tulip Poplar",
+                                "Oak spp.",
                                 "Sweetgum",
                                 "Red Maple",
-                                "Oak spp."
+                                "Slash Pine",
+                                "Loblolly Pine",
+                                "Longleaf Pine",
+                                "Shortleaf Pine",
+                                "Tulip Poplar"
                               ))) %>%
   mutate(SpeciesID = as.numeric(SpeciesName))
 IC_map_df <- as.data.frame(IC_map) %>%
   rename(MapCode = IC_Map_FortBragg)
-IC_map_dom <- left_join(IC_map_df, IC_dom)
+IC_map_dom <- left_join(IC_map_df, IC_dom) %>%
+  mutate(SpeciesName = case_when(MapCode %in% c(0,1) ~ "Non-Forest",
+                                 TRUE ~ SpeciesName)) %>%
+  mutate(SpeciesID = if_else(SpeciesName=="Non-Forest",9,SpeciesID))
+
+sp_names <- c(
+  "Sweetgum",
+  "Red Maple",
+  "Oak spp.",
+  "Slash Pine",
+  "Loblolly Pine",
+  "Longleaf Pine",
+  "Shortleaf Pine",
+  "Tulip Poplar",
+  "Non-Forest"
+)
+
 IC_map_rst <- IC_map_dom %>% select(SpeciesID)
-mapcodes <- unique(IC_map_dom$SpeciesID)
-sp_names <- unique(IC_map_dom$SpeciesName)
-IC_levels <- tibble("id"=mapcodes, "levels"=sp_names) %>% drop_na()
 IC_map$IC_map_rst <- IC_map_rst
 IC_dom_map <- IC_map$IC_map_rst
-levels(IC_dom_map) <- IC_levels
+IC_dom_map <- IC_dom_map %>% mutate(IC_map_rst = factor(IC_map_rst, labels = sp_names))
+IC_dom_map <- mask(IC_dom_map, FB_shp)
 ```
 
 ```{r}
+map_colors <- c(colorblind_pal()(8)[c(2,3,1,4,5,6,7,8)],"gray70")
 ggplot() +
   geom_spatraster(data=IC_dom_map) +
-  scale_fill_colorblind() +
+  scale_fill_manual(values=map_colors, na.value = NA) +
   labs(fill="Dominant Tree Species") +
   theme_bw()
-#TODO: Reorder legend, remove NA
+ggsave("IC_map.jpg", path=here("Plots"), width = 10, height = 5)
 ```
 
 ### Zoom in on burn plot
@@ -260,8 +279,8 @@ BA_plot <- before_after %>%
                               levels = c(
                                 "White Oak",
                                 "Turkey Oak",
-                                "Red Maple",
                                 "Sweetgum",
+                                "Red Maple",
                                 "Tulip Poplar",
                                 "Shortleaf Pine",
                                 "Slash Pine",
@@ -269,10 +288,11 @@ BA_plot <- before_after %>%
                                 "Longleaf Pine"
                               )))
 
+bar_colors <- colorblind_pal()(8)[c(2,3,1,4,5,6,7,8)]
 stacked_barchart <- BA_plot %>%
   ggplot() +
   geom_bar(stat="identity",aes(pre_post,CohortBiomass_Sum, fill=SpeciesName)) +
-  scale_fill_colorblind() +
+  scale_fill_manual(values=bar_colors) +
   labs(x="LANDIS Run",
        y="Total Biomass (kg)",
        fill="Species") +
@@ -334,13 +354,13 @@ mapcodes_poly <- mapcodes_poly %>%
                               levels = c(
                                 "Other",
                                 "Red Maple",
-                                "Tulip Poplar",
                                 "Slash Pine",
                                 "Loblolly Pine",
-                                "Longleaf Pine"
+                                "Longleaf Pine",
+                                "Tulip Poplar"
                               )))
 
-new_colors <- colorblind_pal()(8)[c(1,2,4,5,6)]
+new_colors <- colorblind_pal()(8)[c(1,4,5,6,8)]
 example_mapcode <- ggplot() +
   geom_hline(yintercept = 600, linetype = "dashed") +
   geom_vline(xintercept = 200, linetype = "dashed") +
@@ -353,7 +373,7 @@ example_mapcode <- ggplot() +
        color="Species") +
   theme_bw()
 example_mapcode
-ggsave("example_mapcode.jpg",path = here("Plots"))
+ggsave("example_mapcode.jpg",path = here("Plots"), height=6)
   
 #TODO: Replace species codes with species names
 ```
