@@ -234,6 +234,55 @@ ggplot() +
         axis.ticks = element_blank())
 ```
 
+### Stacked bar chart of species composition in burn plot
+```{r}
+bp_mapcodes <- unique(as.vector(values(crop(IC_map, bp4))))
+BA_plot <- before_after %>% 
+  filter(MapCode %in% bp_mapcodes) %>%
+  group_by(pre_post, SpeciesName) %>%
+  summarize(CohortAge_Avg = mean(CohortAge),
+            CohortBiomass_Sum = sum(CohortBiomass)) %>%
+  mutate(pre_post = factor(pre_post, levels = c("Initial Conditions",
+                                                "Fire2-Dry",
+                                                "Fire2-Wet",
+                                                "Fire5-Dry",
+                                                "Fire5-Wet"))) %>%
+  mutate(SpeciesName = case_when(SpeciesName=="LobPine" ~ "Loblolly Pine",
+                                 SpeciesName=="LongleafPine" ~ "Longleaf Pine",
+                                 SpeciesName=="SlashPine" ~ "Slash Pine",
+                                 SpeciesName=="TulipTree" ~ "Tulip Poplar",
+                                 SpeciesName=="RedMaple" ~ "Red Maple",
+                                 SpeciesName=="SweetGum" ~ "Sweetgum",
+                                 SpeciesName=="WhiteOak" ~ "White Oak",
+                                 SpeciesName=="TurkeyOak" ~ "Turkey Oak",
+                                 SpeciesName=="ShortPine" ~ "Shortleaf Pine")) %>%
+  mutate(SpeciesName = factor(SpeciesName,
+                              levels = c(
+                                "White Oak",
+                                "Turkey Oak",
+                                "Red Maple",
+                                "Sweetgum",
+                                "Tulip Poplar",
+                                "Shortleaf Pine",
+                                "Slash Pine",
+                                "Loblolly Pine",
+                                "Longleaf Pine"
+                              )))
+
+stacked_barchart <- BA_plot %>%
+  ggplot() +
+  geom_bar(stat="identity",aes(pre_post,CohortBiomass_Sum, fill=SpeciesName)) +
+  scale_fill_colorblind() +
+  labs(x="LANDIS Run",
+       y="Total Biomass (kg)",
+       fill="Species") +
+  theme_bw()
+stacked_barchart
+
+ggsave("biomass_barchart.jpg",path = here("Plots"), height=4)
+```
+
+
 ### Plot changes in biomass and age distributions
 
 ```{r}
@@ -273,14 +322,31 @@ for(i in 1:nrow(mapcodes_vect)){
 }
 mapcodes_poly <- vect(tree_polys)
 writeVector(mapcodes_poly, here("Plots","sample_mapcode_canopies.shp"))
-mapcodes_poly <- arrange(mapcodes_poly, CD_m)
+mapcodes_poly <- mapcodes_poly %>%
+  arrange(CD_m) %>%
+  mutate(SpeciesName = case_when(SPECIES_SYMBOL=="PITA" ~ "Loblolly Pine",
+                                 SPECIES_SYMBOL=="PIPA2" ~ "Longleaf Pine",
+                                 SPECIES_SYMBOL=="PIEL" ~ "Slash Pine",
+                                 SPECIES_SYMBOL=="LIST2" ~ "Tulip Poplar",
+                                 SPECIES_SYMBOL=="ACRU" ~ "Red Maple",
+                                 TRUE ~ "Other")) %>%
+  mutate(SpeciesName = factor(SpeciesName,
+                              levels = c(
+                                "Other",
+                                "Red Maple",
+                                "Tulip Poplar",
+                                "Slash Pine",
+                                "Loblolly Pine",
+                                "Longleaf Pine"
+                              )))
 
+new_colors <- colorblind_pal()(8)[c(1,2,4,5,6)]
 example_mapcode <- ggplot() +
   geom_hline(yintercept = 600, linetype = "dashed") +
   geom_vline(xintercept = 200, linetype = "dashed") +
-  geom_spatvector(data=mapcodes_poly, aes(fill=SPECIES_SYMBOL, color=SPECIES_SYMBOL), alpha=0.7) +
-  scale_fill_colorblind() +
-  scale_color_colorblind() +
+  geom_spatvector(data=mapcodes_poly, aes(fill=SpeciesName, color=SpeciesName), alpha=0.7) +
+  scale_fill_manual(values = new_colors) +
+  scale_color_manual(values = new_colors) +
   labs(x = "X (m)",
        y = "Y (m)",
        fill = "Species",
