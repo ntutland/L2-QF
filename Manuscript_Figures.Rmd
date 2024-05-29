@@ -15,6 +15,7 @@ library(terra)
 library(tidyterra)
 library(ggthemes)
 library(ggpattern)
+library(sf)
 ```
 
 ## Visualize Burn Plot Pre-Landis
@@ -262,17 +263,32 @@ mapcode <- treelist %>% filter(MapCode == sample_mapcode)
 mapcodes <- treelist %>%
   filter((X>=100 & X<=300) & (Y>=500 & Y<=700))
 
-mapcodes %>%
-  ggplot() +
+mapcodes_vect <- vect(mapcodes, geom=c("X", "Y"), crs="", keepgeom=FALSE)
+
+tree_polys <- list()
+for(i in 1:nrow(mapcodes_vect)){
+  tree_i <- mapcodes_vect[i,]
+  buffer_i <- buffer(tree_i, width = mapcodes_vect$CD_m[i]/2)
+  tree_polys[[i]] <- buffer_i
+}
+mapcodes_poly <- vect(tree_polys)
+writeVector(mapcodes_poly, here("Plots","sample_mapcode_canopies.shp"))
+mapcodes_poly <- arrange(mapcodes_poly, CD_m)
+
+example_mapcode <- ggplot() +
   geom_hline(yintercept = 600, linetype = "dashed") +
   geom_vline(xintercept = 200, linetype = "dashed") +
-  geom_point(aes(X,Y,color=SPECIES_SYMBOL,size=DBH), shape=16) +
+  geom_spatvector(data=mapcodes_poly, aes(fill=SPECIES_SYMBOL, color=SPECIES_SYMBOL), alpha=0.7) +
+  scale_fill_colorblind() +
   scale_color_colorblind() +
-  coord_equal() +
-  labs(X = "X (m)",
-       Y = "Y (m)",
-       color = "Species") +
+  labs(x = "X (m)",
+       y = "Y (m)",
+       fill = "Species",
+       color="Species") +
   theme_bw()
+example_mapcode
+ggsave("example_mapcode.jpg",path = here("Plots"))
+  
 #TODO: Replace species codes with species names
 ```
 
