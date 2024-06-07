@@ -27,7 +27,7 @@ Find a way to neatly show initial communities. Show full landscape and burn plot
 Read in IC map and IC csv. Find tree species with highest biomass for each MapCode, then add that info to the raster.
 ```{r}
 IC_tif <- rast(here("1.LANDIS-MODEL","LANDIS_run-Fire2-Dry","IC_Map_FortBragg.tif"))
-IC_map <- rast(here("1.LANDIS-MODEL","LANDIS_run-Fire2-Dry","output-community-0.img"))
+IC_map <- rast(here("1.LANDIS-MODEL","LANDIS_run-Fire5-Dry","output-community-0.img"))
 crs(IC_map) <- crs(IC_tif)
 ext(IC_map) <- ext(IC_tif)
 
@@ -91,7 +91,7 @@ IC_dom_map <- mask(IC_dom_map, FB_shp)
 ```
 
 ```{r}
-bp4 <- vect(here("BurnPlots","FB_plot4.shp")) %>%
+bp4 <- vect(here("1.LANDIS-MODEL","Shapefiles","burn_plot.shp")) %>%
   project(crs(IC_dom_map))
 map_colors <- c(colorblind_pal()(8)[c(2,3,1,4,5,6,7,8)],"gray70")
 ggplot() +
@@ -107,7 +107,7 @@ ggsave("IC_map.jpg", path=here("Plots"), width = 7, height = 3)
 
 Look at the dominant tree species
 ```{r}
-bp4 <- vect(here("BurnPlots","FB_plot4.shp")) %>%
+bp4 <- vect(here("1.LANDIS-MODEL","Shapefiles","burn_plot.shp")) %>%
   project(crs(IC_dom_map))
 
 ext_new = ext(bp4)
@@ -118,9 +118,10 @@ ext_new[4] = ext_new[4]+60
 IC_crop_bp4 <- crop(IC_dom_map,ext_new)
 ```
 ```{r}
+single_colors <- colorblind_pal()(8)[c(2,5,6)]
 ggplot() +
   geom_spatraster(data=IC_crop_bp4)+
-  scale_fill_colorblind()+
+  scale_fill_manual(values = single_colors)+
   geom_spatvector(data=bp4,fill=NA,linewidth=1)+
   theme_bw()
 ```
