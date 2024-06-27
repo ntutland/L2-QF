@@ -132,7 +132,7 @@ def get_max_reaction_rate(sim: SimulationOutputs, arrpath: Path, plot: bool = Tr
 HERE = Path(__file__).parent
 runs_dir = HERE / "7.QUICFIRE-MODEL" / "projects"
 
-runs = ["Fire2-Dry", "Fire5-Dry", "Fire2-Wet", "Fire5-Wet"]
+runs = ["Fire2-Dry", "Fire5-Dry", "Fire2-Wet", "Fire5-Wet", "NoScrapple"]
 for run in runs:
     runpath = runs_dir / run
     quic_fire = QUIC_fire.from_file(runpath, version="v5")

@@ -45,8 +45,10 @@ dat_summ_clean <- dat_summ_sd %>%
                          "total_canopy_cons_pct",
                          "average_max_power",
                          "average_res_time_power")) %>%
-  mutate(Rotation = if_else(Rotation== "Fire2", "2-Year", "5-Year"),
-         Climate = if_else(Climate=="Dry", "Hot-Dry", "Hot-Wet"))
+  mutate(Rotation = case_when(Rotation == "Fire2" ~ "2-Year", 
+                              Rotation == "Fire5" ~ "5-Year",
+                              TRUE ~ "No Rx Fire"),
+         Climate = if_else(Climate=="Dry" | is.na(Climate), "Hot-Dry", "Hot-Wet"))
 
 my_colors = colorblind_pal()(8)[2:8]
 
@@ -57,7 +59,7 @@ dat_cons <- dat_summ_clean %>%
                               variable=="total_canopy_cons_pct" ~ "Total Canopy\nConsumption (%)"))
 
 consumption_plot <- dat_cons %>% ggplot() +
-  geom_bar(stat="identity",aes(Rotation,value, fill=Climate),position=position_dodge()) +
+  geom_bar(stat="identity",aes(Rotation,value, fill=Climate),position=position_dodge2(preserve="single")) +
   facet_wrap(.~variable, scales="free_y") +
   scale_fill_manual(values = my_colors) +
   labs(x = "Fire Rotation",

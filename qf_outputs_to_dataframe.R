@@ -18,7 +18,7 @@ output_to_rst <- function(output, out_arr, plot_bounds){
 }
 
 #### ASSEMBLE DATASET ####
-runs <- c("Fire2-Dry","Fire5-Dry","Fire2-Wet","Fire5-Wet")
+runs <- c("Fire2-Dry","Fire5-Dry","Fire2-Wet","Fire5-Wet","NoScrapple")
 outputs <- c("mass_burnt_pct",
              "surface_consumption",
              "surface_consumption_pct",
@@ -37,7 +37,7 @@ burn_plot <- vect(here("1.LANDIS-MODEL",
                          "burn_plot.shp"))
 
 for(run in runs){
-  run_df = data.frame("Run" = rep(run,90000))
+  run_df = data.frame("Run" = rep(run,89700))
   for(output in outputs){
     out_arr <- read.table(here("7.QUICFIRE-MODEL",
                                "projects", 
@@ -57,5 +57,5 @@ for(run in runs){
 
 
 
-all_data <- bind_rows(`Fire2-Dry_df`, `Fire2-Wet_df`, `Fire5-Dry_df`, `Fire5-Wet_df`)
+all_data <- bind_rows(`Fire2-Dry_df`, `Fire2-Wet_df`, `Fire5-Dry_df`, `Fire5-Wet_df`, NoScrapple_df)
 write.csv(all_data, here("all_data.csv"), row.names = F)

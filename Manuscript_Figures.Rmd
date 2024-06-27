@@ -48,12 +48,13 @@ IC_dom <- IC_file %>%
                                  SpeciesName=="TulipTree" ~ "Tulip Poplar",
                                  SpeciesName=="RedMaple" ~ "Red Maple",
                                  SpeciesName=="SweetGum" ~ "Sweetgum",
-                                 SpeciesName=="WhiteOak" ~ "Oak spp.",
-                                 SpeciesName=="TurkeyOak" ~ "Oak spp.",
+                                 SpeciesName=="WhiteOak" ~ "White Oak",
+                                 SpeciesName=="TurkeyOak" ~ "Turkey Oak",
                                  SpeciesName=="ShortPine" ~ "Shortleaf Pine")) %>%
   mutate(SpeciesName = factor(SpeciesName,
                               levels = c(
-                                "Oak spp.",
+                                "Turkey Oak",
+                                "White Oak",
                                 "Sweetgum",
                                 "Red Maple",
                                 "Slash Pine",
@@ -68,11 +69,12 @@ IC_map_df <- as.data.frame(IC_map) %>%
 IC_map_dom <- left_join(IC_map_df, IC_dom) %>%
   mutate(SpeciesName = case_when(is.na(SpeciesName) ~ "Non-Forest",
                                  TRUE ~ SpeciesName)) %>%
-  mutate(SpeciesID = case_when(SpeciesName=="Non-Forest" ~ 9,
+  mutate(SpeciesID = case_when(SpeciesName=="Non-Forest" ~ 10,
                                TRUE ~ SpeciesID))
 
 sp_names <- c(
-  "Oak spp.",
+  "Turkey Oak",
+  "White Oak",
   "Sweetgum",
   "Red Maple",
   "Slash Pine",
@@ -88,12 +90,12 @@ IC_map$IC_map_rst <- IC_map_rst
 IC_dom_map <- IC_map$IC_map_rst
 IC_dom_map <- IC_dom_map %>% mutate(IC_map_rst = factor(IC_map_rst, labels = sp_names))
 IC_dom_map <- mask(IC_dom_map, FB_shp)
-```
+```     
 
 ```{r}
 bp4 <- vect(here("1.LANDIS-MODEL","Shapefiles","burn_plot.shp")) %>%
   project(crs(IC_dom_map))
-map_colors <- c(colorblind_pal()(8)[c(2,3,1,4,5,6,7,8)],"gray70")
+map_colors <- c(colorblind_pal()(8)[2], "green", colorblind_pal()(8)[c(3,1,4,5,6,7,8)],"gray70")
 ggplot() +
   geom_spatraster(data=IC_dom_map) +
   geom_spatvector(data=bp4, fill=NA, color = "red", linewidth = 0.75) +
@@ -134,12 +136,14 @@ fire2_dry <- read.csv(here("1.LANDIS-MODEL","LANDIS_run-Fire2-Dry","community-in
 fire2_wet <- read.csv(here("1.LANDIS-MODEL","LANDIS_run-Fire2-Wet","community-input-file-50.csv"))
 fire5_dry <- read.csv(here("1.LANDIS-MODEL","LANDIS_run-Fire5-Dry","community-input-file-50.csv"))
 fire5_wet <- read.csv(here("1.LANDIS-MODEL","LANDIS_run-Fire2-Dry","community-input-file-50.csv"))
+noscrpple <- read.csv(here("1.LANDIS-MODEL","LANDIS_run-NoScrapple","community-input-file-50.csv"))
 before$pre_post <- "Initial Conditions"
 fire2_dry$pre_post <- "Fire2-Dry"
 fire2_wet$pre_post <- "Fire2-Wet"
 fire5_dry$pre_post <- "Fire5-Dry"
 fire5_wet$pre_post <- "Fire5-Wet"
-before_after <- rbind(before,fire2_dry,fire2_wet,fire5_dry,fire5_wet)
+noscrpple$pre_post <- "No Scrapple"
+before_after <- rbind(before,fire2_dry,fire2_wet,fire5_dry,fire5_wet,noscrpple)
 ```
 
 ```{r}
@@ -165,7 +169,7 @@ BA_two_sp <- before_after %>%
                                 "Tulip Poplar",
                                 "Sweetgum",
                                 "Red Maple",
-                                "Oak spp."
+                                "Turkey Oak"
                               ))) %>%
   group_by(pre_post,MapCode) %>%
   top_n(2, CohortBiomass) %>%
@@ -201,11 +205,14 @@ BA_split <- BA_two_sp %>%
   rename(F5D_ID = FT_ID) %>%
   left_join(forest_types, by=join_by("Fire5-Wet"=="forest_type")) %>%
   rename(F5W_ID = FT_ID) %>%
+  left_join(forest_types, by=join_by("No Scrapple"=="forest_type")) %>%
+  rename(noscrp_ID = FT_ID) %>%
   mutate(IC_ID = as.numeric(IC_ID),
          F2D_ID = as.numeric(F2D_ID),
          F2W_ID = as.numeric(F2W_ID),
          F5D_ID = as.numeric(F5D_ID),
-         F5W_ID = as.numeric(F5W_ID))
+         F5W_ID = as.numeric(F5W_ID),
+         noscrp_ID = as.numeric(noscrp_ID))
 
 IC_map_df <- as.data.frame(IC_map) %>%
   rename(MapCode = Layer_1)
@@ -214,38 +221,44 @@ F2D_df <- BA_split %>% select(MapCode,F2D_ID)
 F2W_df <- BA_split %>% select(MapCode,F2W_ID)
 F5D_df <- BA_split %>% select(MapCode,F5D_ID)
 F5W_df <- BA_split %>% select(MapCode,F5W_ID)
+noscrp_df <- BA_split %>% select(MapCode,noscrp_ID)
 
 Initial_map <- left_join(IC_map_df, IC_df)
 F2D_map <- left_join(IC_map_df, F2D_df)
 F2W_map <- left_join(IC_map_df, F2W_df)
 F5D_map <- left_join(IC_map_df, F5D_df)
 F5W_map <- left_join(IC_map_df, F5W_df)
+noscrp_map <- left_join(IC_map_df, noscrp_df)
 
 IC_rst <- Initial_map %>% select(IC_ID)
 F2D_rst <- F2D_map %>% select(F2D_ID)
 F2W_rst <- F2W_map %>% select(F2W_ID)
 F5D_rst <- F5D_map %>% select(F5D_ID)
 F5W_rst <- F5W_map %>% select(F5W_ID)
+noscrp_rst <- noscrp_map %>% select(noscrp_ID)
 
 IC_map$`Initial Conditions` <- IC_rst
 IC_map$`Fire2-Dry` <- F2D_rst
 IC_map$`Fire2-Wet` <- F2W_rst
 IC_map$`Fire5-Dry` <- F5D_rst
 IC_map$`Fire5-Wet` <- F5W_rst
+IC_map$`No Scrapple` <- noscrp_rst
 
 IC_all <- IC_map$`Initial Conditions`
 F2D_all <- IC_map$`Fire2-Dry`
 F2W_all <- IC_map$`Fire2-Wet`
 F5D_all <- IC_map$`Fire5-Dry`
 F5W_all <- IC_map$`Fire5-Wet`
+noscrp_all <- IC_map$`No Scrapple`
 
 levels(IC_all) <- forest_types %>% select(FT_ID, forest_type)
 levels(F2D_all) <- forest_types %>% select(FT_ID, forest_type)
 levels(F2W_all) <- forest_types %>% select(FT_ID, forest_type)
 levels(F5D_all) <- forest_types %>% select(FT_ID, forest_type)
 levels(F5W_all) <- forest_types %>% select(FT_ID, forest_type)
-before_after_all <- c(IC_all,F2D_all,F2W_all,F5D_all,F5W_all)
-names(before_after_all) <- c("Initial Conditions","Fire2-Dry","Fire2-Wet","Fire5-Dry","Fire5-Wet")
+levels(noscrp_all) <- forest_types %>% select(FT_ID, forest_type)
+before_after_all <- c(IC_all,F2D_all,F2W_all,F5D_all,F5W_all,noscrp_all)
+names(before_after_all) <- c("Initial Conditions","Fire2-Dry","Fire2-Wet","Fire5-Dry","Fire5-Wet","No Scrapple")
 ```
 
 ```{r}
@@ -274,7 +287,8 @@ BA_plot <- before_after %>%
                                                 "Fire2-Dry",
                                                 "Fire2-Wet",
                                                 "Fire5-Dry",
-                                                "Fire5-Wet"))) %>%
+                                                "Fire5-Wet",
+                                                "No Scrapple"))) %>%
   mutate(SpeciesName = case_when(SpeciesName=="LobPine" ~ "Loblolly Pine",
                                  SpeciesName=="LongleafPine" ~ "Longleaf Pine",
                                  SpeciesName=="SlashPine" ~ "Slash Pine",
@@ -297,13 +311,13 @@ BA_plot <- before_after %>%
                                 "Tulip Poplar"
                               )))
 
-bar_colors <- colorblind_pal()(8)[c(2,3,1,4,5,6,8)]
+bar_colors <- colorblind_pal()(8)[c(2,5,6,4,5,6,8)]
 stacked_barchart <- BA_plot %>%
   ggplot() +
-  geom_bar(stat="identity",aes(pre_post,CohortBiomass_Sum, fill=SpeciesName)) +
+  geom_bar(stat="identity",aes(pre_post,CohortBiomass_Sum/1000, fill=SpeciesName)) +
   scale_fill_manual(values=bar_colors) +
   labs(x="LANDIS Run",
-       y="Total Biomass (kg)",
+       y="Total Biomass (metric tons)",
        fill="Species") +
   theme_bw()
 stacked_barchart

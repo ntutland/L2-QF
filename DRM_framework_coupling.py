@@ -494,8 +494,8 @@ def main():
 
     nfuel = 2  # number of tree species (if not using LANDIS)
 
-    MAKE_CLEAN = False
-    RUN_LANDIS = False
+    MAKE_CLEAN = True
+    RUN_LANDIS = True
 
     # Build Trees
     os.chdir("5.TREES-QUICFIRE")
