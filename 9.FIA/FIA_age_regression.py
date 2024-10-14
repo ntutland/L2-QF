@@ -12,7 +12,7 @@ import pickle
 import matplotlib.pyplot as plt
 from sklearn.model_selection import RandomizedSearchCV
 from sklearn.model_selection import train_test_split
-from sklearn.metrics import r2_score
+from sklearn.metrics import r2_score, root_mean_squared_error
 from skranger.ensemble import RangerForestRegressor
 
 
@@ -24,7 +24,7 @@ def main():
     )  # where do you want the model objects saved?
     plot_path = out_path / "Plots"  # where do you want the plots saved?
     plot_path.mkdir(exist_ok=True)
-    fia_done = False  # has an FIA_all file already been made?
+    fia_done = True  # has an FIA_all file already been made?
     ## End user inputs ####
 
     ## Use 11 states from western USFS Regions that measure tree age
@@ -34,16 +34,21 @@ def main():
     FIA_all = compile_fia(fia_done, fia_path, states, out_path)
 
     ## Fit random forest models for each major species group
-    fit_rf(FIA_all, out_path, plot_path, group=1, prop=0.5)
-    fit_rf(FIA_all, out_path, plot_path, group=2, prop=0.2)
-    fit_rf(FIA_all, out_path, plot_path, 3)
-    fit_rf(FIA_all, out_path, plot_path, 4)
+    fit_rf(FIA_all, out_path, plot_path, group=1, prop=0.5, fit_final=False)
+    fit_rf(FIA_all, out_path, plot_path, group=2, prop=0.2, fit_final=False)
+    fit_rf(FIA_all, out_path, plot_path, 3, fit_final=False)
+    fit_rf(FIA_all, out_path, plot_path, 4, fit_final=False)
 
     ##### End main function
 
 
 def fit_rf(
-    data: pd.DataFrame, out_path: Path, plot_path: Path, group: int, prop: int = 1
+    data: pd.DataFrame,
+    out_path: Path,
+    plot_path: Path,
+    group: int,
+    prop: int = 1,
+    fit_final: bool = True,
 ) -> None:
     FIA_reg = data[data["MAJOR_SPGRPCD"] == group].sample(frac=prop)
     FIA_reg = FIA_reg[
@@ -101,8 +106,10 @@ def fit_rf(
     test_spec.fit(x_train, y_train)  # fit the tuned model on the training data
     y_pred = test_spec.predict(x_test)  # use it to predict responses in the test data
     r2_test = r2_score(y_test, y_pred)
+    rmse_test = root_mean_squared_error(y_test, y_pred)
     print(
         f"R-Squared for Random Forest on test data: {r2_test}"
+        f"RMSE for Random Forest on test data: {rmse_test}"
     )  # how did the tuned model do?
     # Plot predicted vs. actual values
     y = x = np.linspace(
@@ -113,7 +120,14 @@ def fit_rf(
     ax1.plot(x, y, "--r")
     ax1.set_xlabel("Predicted Age")
     ax1.set_ylabel("Actual Age")
-    ax1.text(175, 25, "R-Squared = " + "{:.2f}".format(r2_test))
+    ax1.text(
+        200,
+        50,
+        "R-Squared = "
+        + "{:.2f}".format(r2_test)
+        + "\nRMSE = "
+        + "{:.2f}".format(rmse_test),
+    )
     ax1.set_title(f"Species Group {group}")
     fig1.savefig(plot_path / f"pred_actual_spgrp{group}.jpg")
     # Plot predicted vs. residuals
@@ -126,22 +140,54 @@ def fit_rf(
     ax2.set_ylabel("Residuals")
     ax2.set_title(f"Species Group {group}")
     fig2.savefig(plot_path / f"residuals_spgrp{group}.jpg")
-    final_spec = (
-        RangerForestRegressor(  # specify a the final model to train on all the data
-            seed=541,  # set seed
-            mtry=best_rmse.get("mtry"),  # use the tuned mtry
-            min_node_size=best_rmse.get("min_node_size"),  # use the tuned min_n
-            n_estimators=500,  # use 500 trees
+
+    print("Evaluating model with increasing training/testing ratios...")
+    prop_dict = {}
+    for prop in [0.20, 0.15, 0.10, 0.05, 0.01, 0.005]:
+        x_train, x_test, y_train, y_test = (
+            train_test_split(  # split the data into training and test sets
+                FIA_reg.drop(
+                    ["AGE"], axis="columns"
+                ),  # define predictors by dropping response
+                FIA_reg["AGE"],  # define response
+                test_size=prop,  # put X% of the data into the test set
+                random_state=1995,
+            )
         )
-    )
-    x_all = FIA_reg.drop(["AGE"], axis="columns")  # predictors for whole dataset
-    y_all = FIA_reg["AGE"]  # response for whole dataset
+        test_spec.fit(
+            x_train, y_train
+        )  # fit the tuned model on the larger training set
+        y_pred = test_spec.predict(
+            x_test
+        )  # use it to predict responses in the smaller test set
+        r2_test = r2_score(y_test, y_pred)
+        rmse_test = root_mean_squared_error(y_test, y_pred)
+        prop_dict[f"{prop}"] = rmse_test
+
+    fig3, ax3 = plt.subplots()
+    ax3.scatter(prop_dict.keys(), prop_dict.values())
+    ax3.set_xlabel("Proportion in testing set")
+    ax3.set_ylabel("RMSE")
+    ax3.set_title(f"Species Group {group}")
+    fig3.savefig(plot_path / f"RMSE_testing_spgrp{group}.jpg")
+
     print("Fitting final model on all data...")
-    final_spec.fit(x_all, y_all)  # fit model on the whole dataset
-    # Pickle the model object
-    rf_file = open(out_path / f"RF_model_spgrp{group}.obj", "wb")
-    pickle.dump(final_spec, rf_file)
-    rf_file.close()
+    if fit_final:
+        final_spec = (
+            RangerForestRegressor(  # specify a the final model to train on all the data
+                seed=541,  # set seed
+                mtry=best_rmse.get("mtry"),  # use the tuned mtry
+                min_node_size=best_rmse.get("min_node_size"),  # use the tuned min_n
+                n_estimators=500,  # use 500 trees
+            )
+        )
+        x_all = FIA_reg.drop(["AGE"], axis="columns")  # predictors for whole dataset
+        y_all = FIA_reg["AGE"]  # response for whole dataset
+        final_spec.fit(x_all, y_all)  # fit model on the whole dataset
+        # Pickle the model object
+        rf_file = open(out_path / f"RF_model_spgrp{group}.obj", "wb")
+        pickle.dump(final_spec, rf_file)
+        rf_file.close()
     print(f"Model fitting for species group {group} complete.")
 
 

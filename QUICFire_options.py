@@ -15,7 +15,7 @@ PROJ_PATH = os.path.join(OG_PATH, "7.QUICFIRE-MODEL", "projects")
 
 # Simulation parameters
 qf_options["RUN_SIM"] = False
-qf_options["QFVD"] = "v5"  # "v5" or "v6"
+qf_options["QFVD"] = "v6"  # "v5" or "v6"
 PROJ_FOLDER = "LandisTester"  # folder containing QF inputs
 qf_options["SimTime"] = 10800
 qf_options["print_times"] = 30
@@ -34,7 +34,7 @@ qf_options["topo_custom"] = False
 qf_options["max_topo"] = 0  # set for flat right now, may use custom topo in the future
 
 # Wind settings
-qf_options["windspeed"] = 4.47  # m/s
+qf_options["windspeed"] = 2.23  # m/s
 qf_options["winddir"] = 270
 
 # Ignitions settings

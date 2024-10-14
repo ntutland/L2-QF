@@ -3,6 +3,7 @@ from quicfire_tools import SimulationOutputs
 from quicfire_tools.inputs import QUIC_fire
 from matplotlib import pyplot as plt
 import numpy as np
+import pandas as pd
 
 
 def plot_array(x, title):
@@ -129,34 +130,49 @@ def get_max_reaction_rate(sim: SimulationOutputs, arrpath: Path, plot: bool = Tr
     np.savetxt(arrpath / "max_reaction_rate.txt", max_react)
 
 
+def get_canopy_consumption_by_strata(sim: SimulationOutputs, outpath: Path):
+    dens = sim.get_output("fuels-dens")
+    dens_init = dens.to_numpy(timestep=0)
+    dens_final = dens.to_numpy(len(dens.times) - 1)
+    # plot_array(np.amax(dens_init[0, :, :, :], axis=2), "vertical slice") # lots of empty space over tallest trees
+    canopy_cons_pct = (
+        (dens_init[0, 1:, :, :] - dens_final[0, 1:, :, :]) / dens_init[0, 1:, :, :]
+    ) * 100
+    canopy_cons_pct_strata = np.nanmean(canopy_cons_pct, axis=(1, 2))
+    ccps_df = pd.DataFrame({"canopy_consumption_strata": canopy_cons_pct_strata})
+    ccps_df.to_csv(outpath, index=False)
+
+
 HERE = Path(__file__).parent
 runs_dir = HERE / "7.QUICFIRE-MODEL" / "projects"
 
-runs = ["Fire2-Dry", "Fire5-Dry", "Fire2-Wet", "Fire5-Wet", "NoScrapple"]
+runs = ["Fire2-Dry", "Fire5-Dry", "Fire2-Wet", "Fire5-Wet"]
 for run in runs:
     runpath = runs_dir / run
-    quic_fire = QUIC_fire.from_file(runpath, version="v5")
+    quic_fire = QUIC_fire.from_file(runpath, version="v6")
     nz = quic_fire.nz
     sim_outputs = SimulationOutputs(runpath / "Output", nz=nz, ny=400, nx=400)
-    print(sim_outputs.list_available_outputs())
+    canopy_strata_path = runpath / "canopy_strata.csv"
+    get_canopy_consumption_by_strata(sim_outputs, canopy_strata_path)
+    # print(sim_outputs.list_available_outputs())
 
-    arrpath = runpath / "Arrays"
-    arrpath.mkdir(exist_ok=True)
+    # arrpath = runpath / "Arrays"
+    # arrpath.mkdir(exist_ok=True)
 
-    print("\t- getting mass burnt")
-    get_mass_burnt(sim_outputs, arrpath, False)
-    print("\t- getting surface consumption")
-    get_surface_consumption(sim_outputs, arrpath, False)
-    print("\t- getting canopy consumption")
-    get_canopy_consumption(sim_outputs, arrpath, False)
-    print("\t- getting max power")
-    get_max_power(sim_outputs, arrpath, False)
-    print("\t- getting residence time from power")
-    get_residence_time_from_power(sim_outputs, arrpath, False)
-    print("\t- getting residence time from consumption")
-    get_residence_time_from_consumption(sim_outputs, arrpath, False)
-    print("\t- getting max reaction rate")
-    get_max_reaction_rate(sim_outputs, arrpath, False)
+    # print("\t- getting mass burnt")
+    # get_mass_burnt(sim_outputs, arrpath, False)
+    # print("\t- getting surface consumption")
+    # get_surface_consumption(sim_outputs, arrpath, False)
+    # print("\t- getting canopy consumption")
+    # get_canopy_consumption(sim_outputs, arrpath, False)
+    # print("\t- getting max power")
+    # get_max_power(sim_outputs, arrpath, False)
+    # print("\t- getting residence time from power")
+    # get_residence_time_from_power(sim_outputs, arrpath, False)
+    # print("\t- getting residence time from consumption")
+    # get_residence_time_from_consumption(sim_outputs, arrpath, False)
+    # print("\t- getting max reaction rate")
+    # get_max_reaction_rate(sim_outputs, arrpath, False)
 
 # sim = SimulationOutputs(runpath / "Output", nz=40, ny=600, nx=1100)
 # # print(sim.list_available_outputs())

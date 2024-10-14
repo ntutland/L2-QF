@@ -18,7 +18,7 @@ output_to_rst <- function(output, out_arr, plot_bounds){
 }
 
 #### ASSEMBLE DATASET ####
-runs <- c("Fire2-Dry","Fire5-Dry","Fire2-Wet","Fire5-Wet","NoScrapple")
+runs <- c("Fire2-Dry","Fire5-Dry","Fire2-Wet","Fire5-Wet")
 outputs <- c("mass_burnt_pct",
              "surface_consumption",
              "surface_consumption_pct",
@@ -45,7 +45,7 @@ for(run in runs){
                                "Arrays",
                                paste0(output,".txt")))
     out_rst <- output_to_rst(output, out_arr, burn_domain)
-    writeRaster(out_rst, here(paste0(run,"_",output,".tif")), overwrite=T)
+    writeRaster(out_rst, here("Output_Rasters",paste0(run,"_",output,".tif")), overwrite=T)
     out_rst <- crop(out_rst, burn_plot)
     out_list <- as.vector(values(out_rst))
     out_df <- data.frame(output = out_list)
@@ -57,5 +57,18 @@ for(run in runs){
 
 
 
-all_data <- bind_rows(`Fire2-Dry_df`, `Fire2-Wet_df`, `Fire5-Dry_df`, `Fire5-Wet_df`, NoScrapple_df)
+all_data <- bind_rows(`Fire2-Dry_df`, `Fire2-Wet_df`, `Fire5-Dry_df`, `Fire5-Wet_df`)
 write.csv(all_data, here("all_data.csv"), row.names = F)
+
+ccsp_list <- list()
+for(i in 1:length(runs)){
+  df <- read.csv(here("7.QUICFIRE-MODEL",
+                      "projects", 
+                      runs[i],
+                      "canopy_strata.csv"))
+  df$run <- runs[i]
+  df$strata <- row.names(df)
+  ccsp_list[[i]] <- df
+}
+ccsp_df <- bind_rows(ccsp_list)
+write.csv(ccsp_df, here("canopy_strata.csv"), row.names=F)
