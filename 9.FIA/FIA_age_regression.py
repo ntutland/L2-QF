@@ -34,10 +34,10 @@ def main():
     FIA_all = compile_fia(fia_done, fia_path, states, out_path)
 
     ## Fit random forest models for each major species group
-    fit_rf(FIA_all, out_path, plot_path, group=1, prop=0.5, fit_final=False)
-    fit_rf(FIA_all, out_path, plot_path, group=2, prop=0.2, fit_final=False)
-    fit_rf(FIA_all, out_path, plot_path, 3, fit_final=False)
-    fit_rf(FIA_all, out_path, plot_path, 4, fit_final=False)
+    fit_rf(FIA_all, out_path, plot_path, group=1, prop=0.5)
+    fit_rf(FIA_all, out_path, plot_path, group=2, prop=0.2)
+    fit_rf(FIA_all, out_path, plot_path, 3)
+    fit_rf(FIA_all, out_path, plot_path, 4)
 
     ##### End main function
 
@@ -48,7 +48,6 @@ def fit_rf(
     plot_path: Path,
     group: int,
     prop: int = 1,
-    fit_final: bool = True,
 ) -> None:
     FIA_reg = data[data["MAJOR_SPGRPCD"] == group].sample(frac=prop)
     FIA_reg = FIA_reg[
@@ -141,23 +140,11 @@ def fit_rf(
     ax2.set_title(f"Species Group {group}")
     fig2.savefig(plot_path / f"residuals_spgrp{group}.jpg")
 
-    print("Fitting final model on all data...")
-    if fit_final:
-        final_spec = (
-            RangerForestRegressor(  # specify a the final model to train on all the data
-                seed=541,  # set seed
-                mtry=best_rmse.get("mtry"),  # use the tuned mtry
-                min_node_size=best_rmse.get("min_node_size"),  # use the tuned min_n
-                n_estimators=500,  # use 500 trees
-            )
-        )
-        x_all = FIA_reg.drop(["AGE"], axis="columns")  # predictors for whole dataset
-        y_all = FIA_reg["AGE"]  # response for whole dataset
-        final_spec.fit(x_all, y_all)  # fit model on the whole dataset
-        # Pickle the model object
-        rf_file = open(out_path / f"RF_model_spgrp{group}.obj", "wb")
-        pickle.dump(final_spec, rf_file)
-        rf_file.close()
+    print("Saving model object...")
+    # Pickle the model object
+    rf_file = open(out_path / f"RF_model_spgrp{group}.obj", "wb")
+    pickle.dump(test_spec, rf_file)
+    rf_file.close()
     print(f"Model fitting for species group {group} complete.")
 
 
