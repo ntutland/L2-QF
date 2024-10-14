@@ -141,36 +141,6 @@ def fit_rf(
     ax2.set_title(f"Species Group {group}")
     fig2.savefig(plot_path / f"residuals_spgrp{group}.jpg")
 
-    print("Evaluating model with increasing training/testing ratios...")
-    prop_dict = {}
-    for prop in [0.20, 0.15, 0.10, 0.05, 0.01, 0.005]:
-        x_train, x_test, y_train, y_test = (
-            train_test_split(  # split the data into training and test sets
-                FIA_reg.drop(
-                    ["AGE"], axis="columns"
-                ),  # define predictors by dropping response
-                FIA_reg["AGE"],  # define response
-                test_size=prop,  # put X% of the data into the test set
-                random_state=1995,
-            )
-        )
-        test_spec.fit(
-            x_train, y_train
-        )  # fit the tuned model on the larger training set
-        y_pred = test_spec.predict(
-            x_test
-        )  # use it to predict responses in the smaller test set
-        r2_test = r2_score(y_test, y_pred)
-        rmse_test = root_mean_squared_error(y_test, y_pred)
-        prop_dict[f"{prop}"] = rmse_test
-
-    fig3, ax3 = plt.subplots()
-    ax3.scatter(prop_dict.keys(), prop_dict.values())
-    ax3.set_xlabel("Proportion in testing set")
-    ax3.set_ylabel("RMSE")
-    ax3.set_title(f"Species Group {group}")
-    fig3.savefig(plot_path / f"RMSE_testing_spgrp{group}.jpg")
-
     print("Fitting final model on all data...")
     if fit_final:
         final_spec = (
