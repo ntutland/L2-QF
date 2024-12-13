@@ -1,0 +1,17 @@
+LandisData "Climate Config"				
+		
+ClimateTimeSeries			Daily_SequencedYears
+ClimateFile				Num_2_bcc-csm1-1_r1i1p1_rcp85_Mod_NJT.csv <<Num_2_bcc-csm1-1_r1i1p1_rcp85_Mod.csv <<FortBragg_New_Climate_With_WD_noSWR.csv  << FortBragg_New_Climate_With_WD_noSWR.csv <<FortBragg_New_Climate_With_WD.csv <<FortBragg_New_Climate_With_WD_noRH.csv
+ClimateFileFormat			Daily_Temp-K_Precip-mmDay
+
+SpinUpClimateTimeSeries			Daily_RandomYears
+SpinUpClimateFile			ClimateTestOnly.csv
+SpinUpClimateFileFormat			Daily_Temp-K_Precip-mmDay
+
+UsingFireClimate			yes
+FineFuelMoistureCode		85
+DuffMoistureCode			6
+DroughtCode				15
+FirstDayFire			31
+LastDayFire				334
+

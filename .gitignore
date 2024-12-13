@@ -23,10 +23,26 @@ __pycache__
 *.dat 
 *.mod 
 *.png 
-*.txt
 *.out
 *.log
 *.pyc
+*.img
+*.exe
+*.xml
+*.xlsx
+# Ignore LANDIS outputs
+community-input-file*.txt
+community-input-file*.csv
+*-log.txt
+*-log.csv
+#Ignore L2-QF outputs
+Treelist*.csv
+IC_trans.tif
+IC_original_cropped.tif
+NECN_original.txt
+output-community*.tif
+SurfaceLitterBiomass*.tif
+ConiferNeedleBiomass*.tif
 # Ignore temp files
 temp*.py
 temp*.R
@@ -37,11 +53,6 @@ temp*.R
 1.LANDIS-MODEL/Shapefiles/**
 1.LANDIS-MODEL/LANDIS_run_old/**
 1.LANDIS-MODEL/LANDIS_migrated/**
-1.LANDIS-MODEL/LANDIS_run-Fire2-Dry/**
-1.LANDIS-MODEL/LANDIS_run-Fire2-Wet/**
-1.LANDIS-MODEL/LANDIS_run-Fire5-Dry/**
-1.LANDIS-MODEL/LANDIS_run-Fire5-Wet/**
-1.LANDIS-MODEL/LANDIS_run-NoScrapple/**
 1.LLM-HSM-MODEL/**
 5.TREES-QUICFIRE/**
 7.QUICFIRE-MODEL/**

@@ -1,0 +1,143 @@
+>>Testing Fort Bragg
+LandisData  "SCRAPPLE"
+
+Timestep                            1
+
+Species_CSV_File	./scrp_parameters.csv
+
+
+AccidentalIgnitionsMap     RX_Suppression.tif 	<<RZ_Ignitions_New.tif
+LightningIgnitionsMap  RX_Suppression.tif  	<< RZ_Ignitions_New.tif
+RxIgnitionsMap  RX_Ignitions_New.tif 		<< Entire area of RX burns is 1, unburned areas are 0 
+
+DynamicRxIgnitionMaps << Optional
+1	RX_Year_1_3.to.2.tif 
+2	RX_Year_2_3.to.2.tif 
+3	RX_Year_1_3.to.2.tif 
+4	RX_Year_2_3.to.2.tif 
+5	RX_Year_1_3.to.2.tif 
+6	RX_Year_2_3.to.2.tif 
+7	RX_Year_1_3.to.2.tif 
+8	RX_Year_2_3.to.2.tif 
+9	RX_Year_1_3.to.2.tif 
+10	RX_Year_2_3.to.2.tif 
+11	RX_Year_1_3.to.2.tif 
+12	RX_Year_2_3.to.2.tif 
+13	RX_Year_1_3.to.2.tif 
+14	RX_Year_2_3.to.2.tif 
+15	RX_Year_1_3.to.2.tif 
+16	RX_Year_2_3.to.2.tif 
+17	RX_Year_1_3.to.2.tif 
+18	RX_Year_2_3.to.2.tif 
+19	RX_Year_1_3.to.2.tif 
+20	RX_Year_2_3.to.2.tif 
+21	RX_Year_1_3.to.2.tif 
+22	RX_Year_2_3.to.2.tif 
+23	RX_Year_1_3.to.2.tif 
+24	RX_Year_2_3.to.2.tif 
+25	RX_Year_1_3.to.2.tif 
+26	RX_Year_2_3.to.2.tif 
+27	RX_Year_1_3.to.2.tif 
+28	RX_Year_2_3.to.2.tif 
+29	RX_Year_1_3.to.2.tif 
+30	RX_Year_2_3.to.2.tif 
+31	RX_Year_1_3.to.2.tif 
+32	RX_Year_2_3.to.2.tif 
+33	RX_Year_1_3.to.2.tif 
+34	RX_Year_2_3.to.2.tif 
+35	RX_Year_1_3.to.2.tif 
+36	RX_Year_2_3.to.2.tif 
+37	RX_Year_1_3.to.2.tif 
+38	RX_Year_2_3.to.2.tif 
+39	RX_Year_1_3.to.2.tif 
+40	RX_Year_2_3.to.2.tif 
+41	RX_Year_1_3.to.2.tif 
+42	RX_Year_2_3.to.2.tif 
+43	RX_Year_1_3.to.2.tif 
+44	RX_Year_2_3.to.2.tif 
+45	RX_Year_1_3.to.2.tif 
+46	RX_Year_2_3.to.2.tif 
+47	RX_Year_1_3.to.2.tif 
+48	RX_Year_2_3.to.2.tif 
+49	RX_Year_1_3.to.2.tif 
+50	RX_Year_2_3.to.2.tif 
+
+
+AccidentalSuppressionMap	RX_Suppression.tif  << all Zero values no suppresion as per conversation with Rob
+LightningSuppressionMap		RX_Suppression.tif << all Zero values no suppresion as per conversation with Rob
+RxSuppressionMap		RX_Suppression.tif << all Zero values no suppresion as per conversation with Rob
+
+GroundSlopeMap 		Slope_Fort_Bragg.tif  << Fort Bragg map
+UphillSlopeAzimuthMap  	Uphill_Aspect_Fort_Bragg_2.tif << Fort Bragg map
+ClayMap Clay_FortBragg.tif
+
+>>Updated on 2/20 w new fits params
+LightningIgnitionsB0   0 << No Lightning
+LightningIgnitionsB1   0 << No Lightning
+AccidentalIgnitionsB0  0 << No Accidental
+AccidentalIgnitionsB1  0 << No Accidental
+
+>> A generic parameter
+>> Developed from running sim sith no fire and analyzing patterns
+MaximumFineFuels 200.00 <<Was 500  << Tahoe run number
+
+>> Prescribed Fire Parameters
+MaximumRxWindSpeed 13.5 << Tahoe run number 80 << undocumented units, assuming m/x
+>> MaximumRxFireWeatherIndex 80.0 << To discuss on 4-3-19 << Tahoe run number << Optional
+>> MinimumRxFireWeatherIndex 10.0 << Tahoe run number << version 3 climate has very low values 	<< Optional
+MaximumRxTemperature 35.0	<< From Fort Bragg << Optional
+MinimumRxRelativeHumidity 22.0	<< From Fort Bragg << Optional
+MaximumRxFireIntensity 2 << From Fort Bragg
+NumberRxAnnualFires 450 << Taken from RX_Year_1 number of RX shapes 463 for Fort Bragg
+NumberRxDailyFires 3 << From Fort Bragg 
+FirstDayRxFires 1 << From Fort Bragg Jday 1
+LastDayRxFires 213 << From Fort Bragg Jday 213
+TargetRxSize 100 << based on polygon size based on size of RX plots Fort Bragg
+
+<<RxZonesMap (Optional)
+RxZonesMap	Another_Zones_3.to.2.tif <<Test_Zone.tif << Fort Bragg map
+
+MaximumSpreadAreaB0	419.52
+MaximumSpreadAreaB1	26.48  <<FWI
+MaximumSpreadAreaB2  0.00  << effective wind speed
+
+SpreadProbabilityB0 -1.977  << Intercept
+SpreadProbabilityB1 0.06778  <<FWI
+SpreadProbabilityB2 0.852 << relativized fine fuels This is a percent of max fine fuels
+SpreadProbabilityB3 00000 << effective wind speed. 
+
+SiteMortalityB0  1.186e-02  << Intercept
+SiteMortalityB1  1.758e-04  << The parameter fit for site level clay % in Soil.
+SiteMortalityB2  4.537e-06   << The parameter fit for site level previous years annual ET. 
+SiteMortalityB3 -3.553e-04  << The parameter fit for site level Effective Windspeed. 
+SiteMortalityB4 -6.288e-06  << The parameter fit for site level Climatic Water Deficit (PET-AET). 
+SiteMortalityB5  0.0      << The parameter fit for fine fuels (including ladder fuels). 
+SiteMortalityB6  0.0
+
+CohortMortalityB0  -5.1504921 << Intercept
+CohortMortalityB1  -0.926577   << The parameter fit for the relationship between bark thickness and cohort mortality.
+CohortMortalityB2   0.004297<< The parameter fit for the relationship between site mortality and cohort mortality. 
+
+LadderFuelMaxAge 40
+LadderFuelSpeciesList 
+SweetGum << Arbitrary species from FB
+
+
+SuppressionMaxWindSpeed 40 << Tahoe run number
+Suppression_CSV_File ./Suppression_InputV_15.csv  <<< Fwi thresholds here represent 10% and 1% FWI.
+
+
+
+DeadWoodTable 
+LobPine	  	22 << Tahoe run number with Arbitrary species from FB
+LongleafPine	22 << Tahoe run number with Arbitrary species from FB
+ShortPine	33 << Tahoe run number with Arbitrary species from FB
+WhiteOak	38 << Tahoe run number with Arbitrary species from FB
+TurkeyOak       27 << Tahoe run number with Arbitrary species from FB
+SweetGum        28 << Tahoe run number with Arbitrary species from FB
+RedMaple	29 << Tahoe run number with Arbitrary species from FB
+TulipTree  	28 << Tahoe run number with Arbitrary species from FB
+
+
+
+
