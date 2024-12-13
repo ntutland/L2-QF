@@ -195,6 +195,11 @@ ccsp %>%
        color="Scenario") +
   theme_bw()
 
+ccsp %>%
+  filter(strata > 4) %>%
+  group_by(run) %>%
+  summarize(sum_consump = sum(canopy_consumption_strata))
+
 runs <- c("Fire2-Dry","Fire5-Dry","Fire2-Wet","Fire5-Wet")
 spline_list <- list()
 for(i in 1:length(runs)){

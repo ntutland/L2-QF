@@ -16,6 +16,7 @@ library(tidyterra)
 library(ggthemes)
 library(ggpattern)
 library(sf)
+library(patchwork)
 ```
 
 ## Visualize Burn Plot Pre-Landis
@@ -288,7 +289,13 @@ BA_plot <- before_after %>%
                                                 "Fire2-Wet",
                                                 "Fire5-Dry",
                                                 "Fire5-Wet",
-                                                "No Scrapple"))) %>%
+                                                "No Scrapple"),
+                           labels = c("Initial Conditions",
+                                      "Fire2-Dry",
+                                      "Fire2-Wet",
+                                      "Fire5-Dry",
+                                      "Fire5-Wet",
+                                      "NoFire-Wet"))) %>%
   mutate(SpeciesName = case_when(SpeciesName=="LobPine" ~ "Loblolly Pine",
                                  SpeciesName=="LongleafPine" ~ "Longleaf Pine",
                                  SpeciesName=="SlashPine" ~ "Slash Pine",
@@ -323,6 +330,72 @@ stacked_barchart <- BA_plot %>%
 stacked_barchart
 
 ggsave("biomass_barchart.jpg",path = here("Plots"), height=4)
+```
+
+```{r}
+BA_plot_small <- before_after %>% 
+  filter(MapCode %in% bp_mapcodes) %>%
+  filter(CohortAge < 50) %>%
+  group_by(pre_post, SpeciesName) %>%
+  summarize(CohortAge_Avg = mean(CohortAge),
+            CohortBiomass_Sum = sum(CohortBiomass)) %>%
+  mutate(pre_post = factor(pre_post, levels = c("Initial Conditions",
+                                                "Fire2-Dry",
+                                                "Fire2-Wet",
+                                                "Fire5-Dry",
+                                                "Fire5-Wet",
+                                                "No Scrapple"),
+                           labels = c("Initial Conditions",
+                                      "Fire2-Dry",
+                                      "Fire2-Wet",
+                                      "Fire5-Dry",
+                                      "Fire5-Wet",
+                                      "NoFire-Wet"))) %>%
+  mutate(SpeciesName = case_when(SpeciesName=="LobPine" ~ "Loblolly Pine",
+                                 SpeciesName=="LongleafPine" ~ "Longleaf Pine",
+                                 SpeciesName=="SlashPine" ~ "Slash Pine",
+                                 SpeciesName=="TulipTree" ~ "Tulip Poplar",
+                                 SpeciesName=="RedMaple" ~ "Red Maple",
+                                 SpeciesName=="SweetGum" ~ "Sweetgum",
+                                 SpeciesName=="WhiteOak" ~ "White Oak",
+                                 SpeciesName=="TurkeyOak" ~ "Turkey Oak",
+                                 SpeciesName=="ShortPine" ~ "Shortleaf Pine")) %>%
+  mutate(SpeciesName = factor(SpeciesName,
+                              levels = c(
+                                "White Oak",
+                                "Turkey Oak",
+                                "Sweetgum",
+                                "Red Maple",
+                                "Shortleaf Pine",
+                                "Slash Pine",
+                                "Loblolly Pine",
+                                "Longleaf Pine",
+                                "Tulip Poplar"
+                              )))
+
+bar_colors <- colorblind_pal()(8)[c(2,5,6,4,5,6,8)]
+smalltrees_barchart <- BA_plot_small %>%
+  ggplot() +
+  geom_bar(stat="identity",aes(pre_post,CohortBiomass_Sum/1000, fill=SpeciesName)) +
+  scale_fill_manual(values=bar_colors) +
+  labs(x="LANDIS Run",
+       y="Total Biomass (metric tons)",
+       fill="Species") +
+  theme_bw()
+smalltrees_barchart
+
+ggsave("biomass_smalltrees_barchart.jpg",path = here("Plots"), height=4)
+```
+
+```{r}
+biomass <- (stacked_barchart / smalltrees_barchart +
+  plot_layout(guides = "collect", axes = "collect") &
+  theme(legend.position = "bottom",
+        plot.tag.position = c(0.13,0.95))) +
+  plot_annotation(tag_levels = "A")
+
+# biomass
+ggsave("biomass_barcharts.jpg", path = here("Plots"), height = 8, width = 5.1)
 ```
 
 
