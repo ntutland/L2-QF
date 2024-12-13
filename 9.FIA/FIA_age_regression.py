@@ -11,7 +11,7 @@ import numpy as np
 import pickle
 import matplotlib.pyplot as plt
 from sklearn.model_selection import RandomizedSearchCV
-from sklearn.model_selection import train_test_split
+from sklearn.model_selection import KFold
 from sklearn.metrics import r2_score, root_mean_squared_error
 from skranger.ensemble import RangerForestRegressor
 
@@ -36,8 +36,8 @@ def main():
     ## Fit random forest models for each major species group
     fit_rf(FIA_all, out_path, plot_path, group=1, prop=0.5)
     fit_rf(FIA_all, out_path, plot_path, group=2, prop=0.2)
-    fit_rf(FIA_all, out_path, plot_path, 3)
-    fit_rf(FIA_all, out_path, plot_path, 4)
+    # fit_rf(FIA_all, out_path, plot_path, 3)
+    # fit_rf(FIA_all, out_path, plot_path, 4)
 
     ##### End main function
 
@@ -59,16 +59,12 @@ def fit_rf(
     FIA_reg["physclcd"] = FIA_reg["physclcd"].astype(
         "category"
     )  # make sure physiognomic class is a categorical variable
-    x_train, x_test, y_train, y_test = (
-        train_test_split(  # split the data into training and test sets
-            FIA_reg.drop(
-                ["AGE"], axis="columns"
-            ),  # define predictors by dropping response
-            FIA_reg["AGE"],  # define response
-            test_size=0.2,  # put 20% of the data into the test set
-            random_state=1995,
-        )
-    )
+
+    # Get predictors and response
+    x_all = FIA_reg.drop(["AGE"], axis="columns")  # predictors for whole dataset
+    y_all = FIA_reg["AGE"]  # response for whole dataset
+
+    print("Tuning hyperparameters...")
     tune_spec = RangerForestRegressor(  # specify the model used for tuning
         seed=47, n_estimators=500  # set seed  # use 500 trees
     )
@@ -91,54 +87,77 @@ def fit_rf(
         n_jobs=8,  # use parallel processing
         scoring="neg_root_mean_squared_error",  # choose best parameters based on lowest RMSE
     )
-    print("Tuning hyperparameters...")
-    tune_res.fit(x_train, y_train)  # do the cross-validation
+    tune_res.fit(x_all, y_all)  # do the cross-validation
     best_rmse = tune_res.best_params_  # extract the best parameters
+    print(f"Chosen parameters: {best_rmse}")
+
+    print("Evaluating tuned model using cross-validation...")
     test_spec = RangerForestRegressor(  # specify a model to evaluate on the test set
         seed=541,  # set seeed
         mtry=best_rmse.get("mtry"),  # use the tuned mtry
         min_node_size=best_rmse.get("min_node_size"),  # use the tuned min_n
         n_estimators=500,  # use 500 trees
     )
-    print(best_rmse)
-    print("Evaluating tuned model on test set...")
-    test_spec.fit(x_train, y_train)  # fit the tuned model on the training data
-    y_pred = test_spec.predict(x_test)  # use it to predict responses in the test data
-    r2_test = r2_score(y_test, y_pred)
-    rmse_test = root_mean_squared_error(y_test, y_pred)
+    # Define the number of folds
+    n_folds = 10
+    kf = KFold(n_splits=n_folds, shuffle=True, random_state=47)  # 10-fold CV
+    rmse_list = []
+    r2_list = []
+    pred_dict = {"Fold": [], "y_test": [], "y_pred": []}
+    fold = 0
+    # Iterate through each fold
+    for train_index, test_index in kf.split(x_all):
+        fold += 1
+        # Split the data into training and testing sets
+        x_train, x_test = x_all.iloc[train_index], x_all.iloc[test_index]
+        y_train, y_test = y_all.iloc[train_index], y_all.iloc[test_index]
+        # Fit model
+        test_spec.fit(x_train, y_train.values.ravel())
+        # Predict on the test set
+        y_pred = test_spec.predict(x_test)
+        # Calculate RMSE and R2 for this fold
+        r2_test = r2_score(y_test, y_pred)
+        rmse_test = root_mean_squared_error(y_test, y_pred)
+        # Store the RMSE
+        rmse_list.append(rmse_test)
+        r2_list.append(r2_test)
+        # Store the predictions
+        for test_val in y_test:
+            pred_dict["y_test"].append(test_val)
+        for pred_val in y_pred:
+            pred_dict["y_pred"].append(pred_val)
+        fold_list = [fold] * len(y_test)
+        for fold_id in fold_list:
+            pred_dict["Fold"].append(fold_id)
+
     print(
-        f"R-Squared for Random Forest on test data: {r2_test}"
-        f"RMSE for Random Forest on test data: {rmse_test}"
+        f"Average R-Squared in {n_folds}-fold CV: {np.mean(r2_list)}\n"
+        f"Average RMSE in {n_folds}-fold CV: {np.mean(rmse_list)}"
     )  # how did the tuned model do?
-    # Plot predicted vs. actual values
-    y = x = np.linspace(
-        0, max(np.max(y_test), np.max(y_pred)) + 10, 100
-    )  # define a 1:1 line
-    fig1, ax1 = plt.subplots()
-    ax1.scatter(y_pred, y_test)
-    ax1.plot(x, y, "--r")
-    ax1.set_xlabel("Predicted Age")
-    ax1.set_ylabel("Actual Age")
-    ax1.text(
-        200,
-        50,
-        "R-Squared = "
-        + "{:.2f}".format(r2_test)
-        + "\nRMSE = "
-        + "{:.2f}".format(rmse_test),
+
+    # Save the CV predictions and metrics for plotting in R
+    metric_df = pd.DataFrame(
+        {"Fold": np.linspace(1, fold, fold), "RMSE": rmse_list, "R2": r2_list}
     )
-    ax1.set_title(f"Species Group {group}")
-    fig1.savefig(plot_path / f"pred_actual_spgrp{group}.jpg")
-    # Plot predicted vs. residuals
-    y_resid = y_test - y_pred
-    y = np.linspace(0, 0, 100)  # make a line at zero
-    fig2, ax2 = plt.subplots()
-    ax2.scatter(y_pred, y_resid)
-    ax2.plot(x, y, "--r")
-    ax2.set_xlabel("Predicted Age")
-    ax2.set_ylabel("Residuals")
-    ax2.set_title(f"Species Group {group}")
-    fig2.savefig(plot_path / f"residuals_spgrp{group}.jpg")
+    metric_df.to_csv(plot_path / f"cv_metrics_spgrp{group}.csv", index=False)
+    pred_df = pd.DataFrame(pred_dict)
+    pred_df.to_csv(plot_path / f"cv_predictions_spgrp{group}.csv", index=False)
+
+    print("Fitting final model on all data...")
+    final_spec = (
+        RangerForestRegressor(  # specify a the final model to train on all the data
+            seed=541,  # set seed
+            mtry=best_rmse.get("mtry"),  # use the tuned mtry
+            min_node_size=best_rmse.get("min_node_size"),  # use the tuned min_n
+            n_estimators=500,  # use 500 trees
+        )
+    )
+    final_spec.fit(x_all, y_all)
+
+    # Pickle the model object
+    rf_file = open(out_path / f"RF_model_spgrp{group}.obj", "wb")
+    pickle.dump(final_spec, rf_file)
+    rf_file.close()
 
     print("Saving model object...")
     # Pickle the model object
