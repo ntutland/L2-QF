@@ -64,6 +64,6 @@ qf_options["ig_offset"] = 10
 
 
 ###DO NOT CHANGE###
-qf_options["RUN_PATH"] = os.path.join(PROJ_PATH, PROJ_FOLDER)
+qf_options["PROJ_PATH"] = PROJ_PATH
 qf_options["dx"] = qf_options["dy"] = 2  # m
 qf_options["dz"] = 1
