@@ -73,15 +73,20 @@ ggsave("rmse_all.png", path=here("9.FIA","RF_Models","Plots"), height = 5.4, wid
 ##
 
 rmse_ages <- preds %>%
+  group_by(spgrp, age_class, Fold) %>%
+  summarize(RMSE = sqrt(mean((y_pred - y_test)^2))) %>%
+  ungroup() %>%
   group_by(spgrp, age_class) %>%
-  summarize(RMSE = sqrt(mean((y_pred - y_test)^2)))
+  summarize(RMSE_avg = mean(RMSE),
+            RMSE_se = sd(RMSE)/sqrt(n()))
 
 rmse_ages %>%
   ggplot() +
-  geom_point(aes(age_class, RMSE, color = spgrp, fill = spgrp), shape=21, alpha=0.5) +
+  geom_errorbar(aes(age_class, ymin = RMSE_avg-RMSE_se, ymax = RMSE_avg+RMSE_se), width = 0.3) +
+  geom_point(aes(age_class, RMSE_avg, color = spgrp, fill = spgrp), shape=21, alpha=0.5) +
   facet_wrap(.~spgrp) +
-  labs(x="Species Group",
-       y="RMSE") +
+  labs(x="Age class (years)",
+       y="RMSE (years)") +
   scale_y_continuous(limits = c(0,120), 
                      expand=c(0,0),
                      breaks = seq(0,120,20)) +
@@ -90,4 +95,4 @@ rmse_ages %>%
   theme_bw() +
   theme(legend.position = "none")
 
-ggsave("rmse_age_classes.png", path=here("9.FIA","RF_Models","Plots"))
+ggsave("rmse_age_classes.png", path=here("9.FIA","RF_Models","Plots"), width = 6, height=4)
